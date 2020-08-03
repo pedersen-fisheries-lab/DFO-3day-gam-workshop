@@ -208,6 +208,18 @@ mod_soap_split <- gam(cod ~ s(long, lat, bs="sf", xt=list(bnd=list(soap_bnd)))+
 summary(mod_soap_split)
 
 #    - MRFs
+load("data/mrf_strata.RData")
+dat_2010$strata <- as.factor(dat_2010$strata)
+mod_mrf <- gam(cod ~ s(strata, bs="mrf", xt=list(polys=nl_strata)),
+                data=dat_2010, method="REML",
+                family=tw())
+summary(mod_mrf)
+
+plot(mod_mrf)
+
+
+
+
 #    - factor-smooths
 # could revisit the temperature-depth model?
 # multi-species?
