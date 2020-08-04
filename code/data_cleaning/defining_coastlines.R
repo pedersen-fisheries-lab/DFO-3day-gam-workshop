@@ -2,7 +2,7 @@ library(rnaturalearth)
 library(sf)
 library(dplyr)
 
-trawl_map <- read.csv("../../data/trawl_nl.csv") %>%
+trawl_map <- read.csv("data/trawl_nl.csv") %>%
   st_as_sf(coords = c("long","lat"),remove=FALSE)%>%
   st_set_crs(4326)
 
@@ -20,7 +20,10 @@ nl_north <- st_cast(nl_geom[[2]], "POLYGON")
 nl_coast <- st_sfc(st_union(nl_south, nl_north), crs=4326)
 
 trawl_strata <- read_sf("data/all_strata.shp")%>%
-  filter(DIV%in%c("2J","3K","3L"))
+  filter(DIV%in%c("2J","3K","3L")) %>%
+  #dealing with the annoying issue of strata with subareas. strata should be 3-digit numbers
+  mutate(stratum = ifelse(stratum>1000, round(stratum/10,0),stratum))%>%
+  filter(stratum %in% trawl_map$stratum)
 
-write_sf(nl_coast,dsn="../../data/nl_coast.shp")
-write_sf(trawl_strata,dsn="../../data/trawl_strata.shp")
+write_sf(nl_coast,dsn="data/nl_coast.shp",delete_layer = TRUE)
+write_sf(trawl_strata,dsn="data/trawl_strata.shp",delete_layer = TRUE)
