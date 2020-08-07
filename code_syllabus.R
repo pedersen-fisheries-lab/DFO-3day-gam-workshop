@@ -30,7 +30,7 @@ summary(mod)
 
 #  - adding more than one smooth to yr model
 # add year effect?
-mod <- gam(temp_bottom~s(log10(depth), k=20) + s(year, k=15),
+mod <- gam(temp_bottom~s(log10(depth), k=20) + s(year, k=10),
            data=dat, method="REML")
 summary(mod)
 # what does that look like?
@@ -42,20 +42,22 @@ plot(mod, pages=1)
 #  - moving beyond normal data (campylobacter?)
 #    - exponential family and conditionally exp family (i.e., `family` + `tw` + `nb`)
 
-# here we have trawls, so data are 0 or greater continous
+# here we have trawls, so data are 0 or greater continuous
 # (assuming this is CPUE?)
 
-# can try modelling per year totals using different responses
+# can try modelling per year averages using different responses
 dat_yearly_cod <- dat %>%
   select(year, cod) %>%
   group_by(year) %>%
-  mutate(catch = sum(cod)) %>%
-  select(-cod) %>%
-  distinct()
+  summarize(catch = mean(cod)) 
+
 plot(dat_yearly_cod$year, dat_yearly_cod$catch)
 
-mod_yearly <- gam(catch ~ s(year), data=dat_yearly_cod, method="REML",
-                  family=nb())
+mod_yearly <- gam(catch ~ s(year,k=5), 
+                  data=dat_yearly_cod, 
+                  method="REML",
+                  family=tw())
+
 summary(mod_yearly)
 plot(mod_yearly)
 
