@@ -113,6 +113,7 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
   - [Distance DSM workshop](http://workshops.distancesampling.org/online-dsm-2020/)
 - Noam: 
   - [GAMs in R tutorial](https://noamross.github.io/gams-in-r-course/)
+  - [Short talk on many types of models that can fit with mgcv](https://raw.githubusercontent.com/noamross/gam-resources/master/2017-11-14-noamross-gams-nyhackr.pdf)
 - Gavin: 
   - [Blog: From the Bottom of the Heap](https://fromthebottomoftheheap.net/)
   - [Online GAM workshop](https://www.youtube.com/watch?v=sgw4cu8hrZM&feature=youtu.be)
