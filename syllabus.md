@@ -45,6 +45,8 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
       - `ti` vs `te`
     - spatio-temporal modelling
       - `te(x,y,t)` constructions
+  - centering constraints
+    - what does the intercept mean?
       
       
 ## 3. model checking and selection (follow-up on temperature, richness, and shrimp data sets)
