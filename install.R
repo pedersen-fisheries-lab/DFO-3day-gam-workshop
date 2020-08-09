@@ -1,0 +1,1 @@
+install.packages(c("dplyr", "rnaturalearth", "sf", "lwgeom", "dsm", "ggplot2", "gratia", "mgcv", "tidyr"))
