@@ -1,20 +1,20 @@
 FROM rocker/binder:4.0.2
 MAINTAINER ross@ecohealthalliance.org
 
-ENV NB_USER=jovyan
 
 ## Copies your repo files into the Docker Container
 USER root
-COPY . ${HOME}
-RUN chown -R ${NB_USER} ${HOME}
+COPY . /home/${NB_USER}/DFO-3day-gam-workshop
+RUN chown -R ${NB_USER} /home/${NB_USER}
+COPY code/Rprofile /home/rstudio/.Rprofile
+RUN chown ${NB_USER} /home/rstudio/.Rprofile
 RUN install2.r renv
-RUN Rscript -e 'install.packages(unique(renv::dependencies(progress = FALSE)[, "Package"]), repoc = c(CRAN="https://packagemanager.rstudio.com/all/__linux__/focal/latest"))'
+RUN Rscript -e 'remotes::install_cran(unique(renv::dependencies(progress = FALSE)[, "Package"]))'
 
 ## Become normal user again
+
 USER ${NB_USER}
-WORKDIR /home/${NB_USER}
+WORKDIR /home/${NB_USER}/DFO-3day-gam-workshop
 
-
-CMD jupyter notebook --ip 0.0.0.0
 
 
