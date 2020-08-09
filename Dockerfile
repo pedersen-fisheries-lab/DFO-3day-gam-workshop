@@ -5,9 +5,9 @@ MAINTAINER ross@ecohealthalliance.org
 USER root
 COPY . ${HOME}
 RUN chown -R ${NB_USER} ${HOME}
+RUN install2.r renv
 
 ## Become normal user again
 USER ${NB_USER}
 
-RUN install2.r renv
 RUN R --quiet -e "renv::install(unique(renv::dependencies()$Package), library = .libPaths()[1])"
