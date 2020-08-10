@@ -1,0 +1,137 @@
+---
+title: "Links to other methods"
+author: "David L Miller"
+date: "August 14, 2020"
+output:
+  xaringan::moon_reader:
+    css: ['default', 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', 'slides.css']
+    lib_dir: libs
+    nature:
+      titleSlideClass: ['inverse','middle','left',my-title-slide]
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+      ratio: '16:9'
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(cache = TRUE, dev = 'svg', echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.height=6, fig.width = 1.777777*6)
+library('here')
+library('mgcv')
+library('gratia')
+library('gamair')
+library('ggplot2')
+library('purrr')
+library('mvnfast')
+library("tibble")
+library('gganimate')
+library('cowplot')
+library('tidyr')
+library("knitr")
+library("viridis")
+library('readr')
+library('dplyr')
+library('gganimate')
+library('xaringan')
+## plot defaults
+theme_set(theme_minimal(base_size = 16, base_family = 'Fira Sans'))
+## constants
+anim_width <- 1000
+anim_height <- anim_width / 1.77777777
+anim_dev <- 'png'
+anim_res <- 200
+```
+
+# So far:
+
+- Looked at models within `mgcv`
+  - `gam()`, `bam()`, `gamm()`
+
+But there are other places to go.
+
+
+---
+class: inverse middle center big-subsection
+
+## GAMs in context
+
+---
+
+# Lots of ways to fit flexible models!
+
+- INLA
+- kriging
+- maxent
+- mixed effects models
+
+---
+
+# Lots of things are just GLMs
+
+- GAMs are "GLMs with wiggles"
+- GLMMs are "GLMs with random effects"
+- What is the general theme here?
+
+---
+
+# Basis-penalty smoothers
+
+
+---
+
+# Penalties are precisions
+
+
+---
+
+# Covariance modelling
+
+---
+
+# Links to INLA, kriging
+
+---
+
+# Bayesian connections
+
+---
+
+class: inverse middle center big-subsection
+
+## Links to other software
+
+---
+
+# Basis-penalty/covariance opens things up
+
+- Lots of software just wants design and covariance matrices
+- JAGS/`brms`/TMB
+
+---
+
+# The `jagam` idea
+
+---
+
+# We can do the same thing in TMB!
+
+---
+
+# `brms`
+
+
+---
+
+# Utility functions
+
+- better graphics for GAMs: `gratia`, `mgcViz`
+- very new: `mgcvUtils`
+
+---
+
+class: inverse middle center big-subsection
+
+# Q&A
