@@ -1,0 +1,165 @@
+---
+title: "Generalized Additive Models"
+author: "Eric Pedersen, David Miller, Noam Ross, Gavin Simpson"
+date: "07/08/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir = usethis::proj_path())
+
+library(knitr)
+library(dplyr)
+library(viridis)
+library(ggplot2)
+library(animation)
+library(mgcv)
+opts_chunk$set(cache=TRUE, echo=FALSE)
+```
+
+
+## Overview
+
+- A very quick refresher on GLMs
+- What is a GAM?
+- How do GAMs work? (*Roughly*)
+- What is smoothing?
+- Fitting and plotting simple models
+
+
+# A (very fast) refresher on GLMs
+
+
+##  What is a Generalized Linear model (GLM)?
+
+Models that look like:
+
+$$
+y_i \sim Some\ distribution(\mu_i, \sigma_i) \\
+link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots 
+$$
+
+##  What is a Generalized Linear model (GLM)?
+
+Models that look like:
+
+$$
+y_i \sim Some\ distribution(\mu_i, \sigma_i) \\
+link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots 
+$$
+
+ The average value of the response, $\mu_i$, assumed to be a linear combination of the covariates, $x_{ji}$, with an offset
+
+
+##  What is a Generalized Linear model (GLM)?
+
+Models that look like:
+
+$$
+y_i \sim Some\ distribution(\mu_i, \sigma_i) \\
+link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots 
+$$
+
+
+ The model is fit (not really...) by maximizing the log-likelihood:
+
+$$
+\text{maximize}  \sum_{i=1}^n logLik (Some\ distribution(y_i)) \\\
+\text{ with respect to } Intercept, \ \beta_1,\ \beta_2, \ ...
+$$
+
+##  With normally distributed data (for continuous unbounded data):
+
+
+$$
+y_i = Normal(\mu_i , \sigma_i) \\
+Identity(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots 
+$$
+
+```{r gaussplot, fig.width=6, fig.height=3}
+set.seed(2) ## simulate some data...
+dat <- tibble(x = seq(0,1, length = 100),
+              y = rnorm(100, 3*x+2, 0.5))
+
+mod <- glm(y~x, data= dat, family=gaussian)
+
+p <- ggplot(dat,aes(y=y,x=x)) +
+  geom_point() +
+  geom_smooth(method= glm,formula=y~x, method.args=list(family = "gaussian"))+
+  labs(title= paste0("True: Identity(mu) = 2 + 3*x, sigma = 0.5\n",
+                     "Estimated: Identity(mu) = ",
+                     round(coef(mod)[[1]],1)," + ",
+                     round(coef(mod)[[2]],1),"*x, sigma = ",
+                     round(summary(mod)$dispersion,2)))+
+  theme_minimal()
+  
+print(p)
+```
+
+
+##  With Poisson-distributed data (for count data):
+
+
+$$
+y_i = Poisson(\mu_i) \\
+\mu_i = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots 
+$$
+
+```{r poisplot, fig.width=6, fig.height=3}
+set.seed(2) ## simulate some data...
+dat <- tibble(x = seq(0,1, length = 100),
+              y = rpois(100, exp(3*x+2)))
+
+mod <- glm(y~x, data= dat, family= poisson(link ="log"))
+
+p <- ggplot(dat,aes(y=y,x=x)) +
+  geom_point() +
+  geom_smooth(method= glm,formula=y~x, method.args=list(family = "poisson"))+
+  labs(title= paste0("True: ln(mu) = 2 + 3*x\n",
+                     "Estimated: ln(mu) = ",
+                     round(coef(mod)[[1]],1)," + ",
+                     round(coef(mod)[[2]],1),"*x"))+
+  theme_minimal()
+  
+print(p)
+```
+
+# Why bother with anything more complicated?
+
+
+## Is this linear?
+
+
+```{r islinear,  fig.height=4, fig.width=6}
+set.seed(2) ## simulate some data...
+dat <- gamSim(1, n=400, dist="normal", scale=0.2, verbose=FALSE)
+dat <- dat[,c("y", "x0", "x1", "x2", "x3")]
+p <- ggplot(dat,aes(y=y,x=x1)) +
+      geom_point() +
+      theme_minimal()
+print(p)
+```
+
+## Is this linear? Maybe?
+
+
+```{r eval=FALSE, echo=TRUE}
+lm(y ~ x1, data=dat)
+```
+
+
+```{r maybe, fig.height=4, fig.width=6}
+p <- ggplot(dat, aes(y=y, x=x1)) + 
+  geom_point() +
+  theme_minimal()
+
+print(p + geom_smooth(method="lm"))
+```
+
+
+
+
+# What is a GAM?
+
+

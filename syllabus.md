@@ -34,7 +34,7 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
 
 -   what's going on behind the scenes here?
 
-    -   interpolation vs. linear models
+    -   interpolation vs. linear models
     -   wiggles/penalties (non-technical)
 
 -   adding more than one smooth to yr model
