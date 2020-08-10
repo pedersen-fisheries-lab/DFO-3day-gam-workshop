@@ -245,27 +245,6 @@ Not normal, not integer!
 
 ---
 
-# 🔀 Minor diversion re-project the data
-
-(Using UTM Zone 21, don't yell at me!)
-
-
-```r
-library(sf)
-shrimp2010 &lt;- shrimp2010 %&gt;%
-  st_as_sf(coords = c("long", "lat"), remove=FALSE)%&gt;%
-  st_set_crs(4326) %&gt;%
-  st_transform(32621)
-
-xy &lt;- as.data.frame(do.call(rbind, st_geometry(shrimp2010)))
-names(xy) &lt;- c("x","y")
-shrimp2010 &lt;- shrimp2010 %&gt;%
-  st_drop_geometry() %&gt;%
-  bind_cols(xy)
-```
-
----
-
 # 🦐🗺
 
 Trying out quasi-poisson
@@ -567,24 +546,6 @@ ggplot(shrimp) +
 
 ---
 
-# Diversion: re-project full data
-
-
-```r
-library(sf)
-shrimp &lt;- shrimp %&gt;%
-  st_as_sf(coords = c("long", "lat"), remove=FALSE)%&gt;%
-  st_set_crs(4326) %&gt;%
-  st_transform(32621)
-
-xy &lt;- as.data.frame(do.call(rbind, st_geometry(shrimp)))
-names(xy) &lt;- c("x","y")
-shrimp &lt;- shrimp %&gt;%
-  st_drop_geometry() %&gt;%
-  bind_cols(xy)
-```
-
----
 
 # 🦐🗺🗓
 
@@ -644,18 +605,11 @@ shrimp_xyt &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 
 ![](02-extending-gams_files/figure-html/ti-xyt-plot-xyt-1.svg)&lt;!-- --&gt;
 
-
 ---
 
 # `ti(x, y)` and `ti(year)`
 
-
-
----
-
-# 🦐🗺🗓
-
-- What about the univariate terms?
+![](02-extending-gams_files/figure-html/ti-xyt-plot-xy-t-1.svg)&lt;!-- --&gt;
 
 ---
 

@@ -286,26 +286,6 @@ ggplot(shrimp2010) +
 
 ---
 
-# 🔀 Minor diversion re-project the data
-
-(Using UTM Zone 21, don't yell at me!)
-
-```{r}
-library(sf)
-shrimp2010 <- shrimp2010 %>%
-  st_as_sf(coords = c("long", "lat"), remove=FALSE)%>%
-  st_set_crs(4326) %>%
-  st_transform(32621)
-
-xy <- as.data.frame(do.call(rbind, st_geometry(shrimp2010)))
-names(xy) <- c("x","y")
-shrimp2010 <- shrimp2010 %>%
-  st_drop_geometry() %>%
-  bind_cols(xy)
-```
-
----
-
 # 🦐🗺
 
 Trying out quasi-poisson
@@ -507,23 +487,6 @@ ggplot(shrimp) +
 
 ---
 
-# Diversion: re-project full data
-
-```{r}
-library(sf)
-shrimp <- shrimp %>%
-  st_as_sf(coords = c("long", "lat"), remove=FALSE)%>%
-  st_set_crs(4326) %>%
-  st_transform(32621)
-
-xy <- as.data.frame(do.call(rbind, st_geometry(shrimp)))
-names(xy) <- c("x","y")
-shrimp <- shrimp %>%
-  st_drop_geometry() %>%
-  bind_cols(xy)
-```
-
----
 
 # 🦐🗺🗓
 
@@ -563,18 +526,15 @@ lapply(2005:2014, function (t) vis.gam(shrimp_xyt, view=c("x", "y"), cond=list(y
 plot(shrimp_xyt, select=1, scheme=2, asp=1)
 ```
 
-
 ---
 
 # `ti(x, y)` and `ti(year)`
 
-
-
----
-
-# 🦐🗺🗓
-
-- What about the univariate terms?
+```{r ti-xyt-plot-xy-t, echo=FALSE, results="hide", fig.width=7}
+par(mfrow=c(1, 2))
+plot(shrimp_xyt, select=2, scheme=2, asp=1)
+plot(shrimp_xyt, select=3, scheme=2, scale=0, seWithMean=TRUE)
+```
 
 ---
 
