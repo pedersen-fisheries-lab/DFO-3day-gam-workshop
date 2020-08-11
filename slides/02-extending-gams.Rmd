@@ -85,12 +85,12 @@ These are good models, but there's lots more to see!
  
 Other options?
  
-- `quasipoisson` (count-ish, $y>0$)
+- `quasipoisson` (count-ish, $y \geq 0$)
   - awkward to check, no likelihood
-- `tw`/`Tweedie` ( $y>=0$)
+- `tw`/`Tweedie` ( $y \geq 0$)
   - great for CPUE-type data
-- `nb`/`negbin` ( $y>=0$)
-  - can be used but 
+- `nb`/`negbin` ( $y \geq 0$)
+  - can be used but strong assumption (see next)
 
 ---
 
@@ -109,7 +109,7 @@ phi <- 1
 fy <- exp(ldTweedie(y,mu=2,p=p[1],phi=phi)[,1])
 
 rr <- brewer.pal(8,"Dark2")
-
+  
 plot(y, fy, type="n", ylim=c(0,1), main="Tweedie density as q changes",
      xlab="Count", ylab="Density")
 for (i in 1:length(p)) {
@@ -135,8 +135,6 @@ legend(x="topright", legend=p, fill=rr, inset=0.05)
 
 .pull-left[
 ```{r negbin, echo=FALSE, fig.height=5, fig.width=5}
-par(ps=15)
-
 y<-seq(1,12,by=1)
 disps <- seq(0.01, 1, len=5)
 
@@ -148,7 +146,7 @@ for(disp in disps){
   i <- i+1
 }
 
-plot(range(y), range(fymat), type="n", ylab="Density", xlab="x", cex.lab=1.5,
+plot(range(y), range(fymat), type="n", ylab="Density", xlab="Count", cex.lab=1.5,
      main="")
 
 rr <- brewer.pal(8,"Dark2")
@@ -222,8 +220,14 @@ summary(b_rich)
 
 # Other `family` stuff
 
-- can specify a `link=` argument (usually don't have to)
-- `model$family` can give you details
+- can specify a `link=` argument
+  - (usually don't have to)
+  - `?family` has options for each distribution
+- for a fitted model `model$family`
+  - details of what was used
+  - `model$family$linkfun()` gives link function
+  - `model$family$linkinv()` gives inverse link
+- More on checking distributions tomorrow!
 
 ---
 
@@ -259,20 +263,22 @@ hist(shrimp2010$shrimp, xlab="Biomass", main="")
 
 # 🦐🗺
 
-
-.pull-right[
-```{r biom-space-plot, fig.height=8, echo=FALSE}
-ggplot(shrimp2010) +
-  geom_point(aes(x=long, y=lat, size=shrimp)) +
-  coord_map()
-```
-]
-
 .pull-left[
 - spatial variation!
 - how do we model this??
+- `s(long) + s(lat)` misses the interaction
 ]
 
+.pull-right[
+```{r biom-space-plot, fig.height=11, echo=FALSE}
+coast <- read_sf(here("data/nl_coast.shp"))
+
+ggplot(shrimp2010) +
+  geom_point(aes(x=long, y=lat, size=shrimp)) +
+  geom_sf(data=coast) +
+  coord_sf()
+```
+]
 
 ---
 
@@ -314,13 +320,13 @@ plot(b_shrimp, asp=1)
 # That plot is hard to understand!
 
 .pull-left[
-```{r plot-effect-bad, fig.height=8}
+```{r plot-effect-bad, fig.height=10}
 plot(b_shrimp, asp=1)
 ```
 ]
 
 .pull-right[
-```{r plot-effect-good, fig.height=8}
+```{r plot-effect-good, fig.height=10}
 plot(b_shrimp, scheme=2, asp=1)
 ```
 ]
@@ -339,8 +345,6 @@ class: inverse middle center big-subsection
 
 ## Now give it a try!
 
-
----
 
 ---
 
@@ -415,8 +419,8 @@ summary(shrimp_te)
 # Things to fiddle with
 
 - Setting `k=` 2 ways:
-  - `k=5`: 5 for all covariates (total $5^2=25$ here)
-  - `k=c(3,5)`: per basis, in order (total 3*5=15)
+  - `k=5`: 5 for all covariates (total $5*5=25$)
+  - `k=c(3,5)`: per basis, in order (total $3*5=15$)
 - Setting `bs=` 2 ways:
   - `bs="tp"`: tprs for all bases
   - `bs=c("tp", "tp")`: tprs per basis
@@ -455,11 +459,11 @@ class: inverse middle center big-subsection
 
 # 🦐🗺🗓
 
-```{r biom-space-time-plot, fig.height=5}
+```{r biom-space-time-plot, fig.height=8, fig.width=15, echo=FALSE}
 ggplot(shrimp) +
-  geom_point(aes(x=long, y=lat, size=shrimp)) +
-  facet_wrap(~year)
-  coord_map()
+  geom_point(aes(x=long, y=lat, size=shrimp), alpha=.5) +
+  geom_sf(data=coast) +
+  facet_wrap(~year, ncol=5)
 ```
 
 
@@ -472,23 +476,24 @@ ggplot(shrimp) +
 - Want that 2d smooth rather than `te(lat, long)`?
 - `d=` groups covariates
   - `te(x, y, year, d=c(2,1))` gives `x,y` smooth and `year` smooth tensor
-  - (assumes default `k=` and `bs=` for bases)
+- Assuming default `k=` and `bs=` for bases
 
 ---
 
 # Fiddling
 
 - Often fewer temporal replicates
-  - Less years than unique locations
-  - `k=` smaller for temporal covariate
+  - Fewer years than unique locations
+  - `k=` smaller for temporal covariate?
 - Use cubic spline basis for time?
   - simpler basis, even knot placement
 - When using `ti()` everything needs to match up!
 
 ---
 
-
 # 🦐🗺🗓
+
+Putting that together:
 
 ```{r ti-xyt}
 shrimp_xyt <- gam(shrimp ~ offset(log(area_trawled)) +

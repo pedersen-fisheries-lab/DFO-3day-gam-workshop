@@ -63,12 +63,12 @@ These are good models, but there's lots more to see!
  
 Other options?
  
-- `quasipoisson` (count-ish, `\(y&gt;0\)`)
+- `quasipoisson` (count-ish, `\(y \geq 0\)`)
   - awkward to check, no likelihood
-- `tw`/`Tweedie` ( `\(y&gt;=0\)`)
+- `tw`/`Tweedie` ( `\(y \geq 0\)`)
   - great for CPUE-type data
-- `nb`/`negbin` ( `\(y&gt;=0\)`)
-  - can be used but 
+- `nb`/`negbin` ( `\(y \geq 0\)`)
+  - can be used but strong assumption (see next)
 
 ---
 
@@ -175,8 +175,14 @@ plot(b_rich, shade=TRUE)
 
 # Other `family` stuff
 
-- can specify a `link=` argument (usually don't have to)
-- `model$family` can give you details
+- can specify a `link=` argument
+  - (usually don't have to)
+  - `?family` has options for each distribution
+- for a fitted model `model$family`
+  - details of what was used
+  - `model$family$linkfun()` gives link function
+  - `model$family$linkinv()` gives inverse link
+- More on checking distributions tomorrow!
 
 ---
 
@@ -222,16 +228,15 @@ Not normal, not integer!
 
 # 🦐🗺
 
+.pull-left[
+- spatial variation!
+- how do we model this??
+- `s(long) + s(lat)` misses the interaction
+]
 
 .pull-right[
 ![](02-extending-gams_files/figure-html/biom-space-plot-1.svg)&lt;!-- --&gt;
 ]
-
-.pull-left[
-- spatial variation!
-- how do we model this??
-]
-
 
 ---
 
@@ -332,8 +337,6 @@ class: inverse middle center big-subsection
 
 ---
 
----
-
 class: inverse middle center big-subsection
 
 ## Other multi-dimensional smooths
@@ -413,8 +416,8 @@ shrimp_te &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 # Things to fiddle with
 
 - Setting `k=` 2 ways:
-  - `k=5`: 5 for all covariates (total `\(5^2=25\)` here)
-  - `k=c(3,5)`: per basis, in order (total 3*5=15)
+  - `k=5`: 5 for all covariates (total `\(5*5=25\)`)
+  - `k=c(3,5)`: per basis, in order (total `\(3*5=15\)`)
 - Setting `bs=` 2 ways:
   - `bs="tp"`: tprs for all bases
   - `bs=c("tp", "tp")`: tprs per basis
@@ -478,48 +481,7 @@ class: inverse middle center big-subsection
 
 # 🦐🗺🗓
 
-
-```r
-ggplot(shrimp) +
-  geom_point(aes(x=long, y=lat, size=shrimp)) +
-  facet_wrap(~year)
-```
-
 ![](02-extending-gams_files/figure-html/biom-space-time-plot-1.svg)&lt;!-- --&gt;
-
-```r
-  coord_map()
-```
-
-```
-## &lt;ggproto object: Class CoordMap, Coord, gg&gt;
-##     aspect: function
-##     backtransform_range: function
-##     clip: on
-##     default: FALSE
-##     distance: function
-##     is_free: function
-##     is_linear: function
-##     labels: function
-##     limits: list
-##     modify_scales: function
-##     orientation: NULL
-##     params: list
-##     projection: mercator
-##     range: function
-##     render_axis_h: function
-##     render_axis_v: function
-##     render_bg: function
-##     render_fg: function
-##     setup_data: function
-##     setup_layout: function
-##     setup_panel_guides: function
-##     setup_panel_params: function
-##     setup_params: function
-##     train_panel_guides: function
-##     transform: function
-##     super:  &lt;ggproto object: Class CoordMap, Coord, gg&gt;
-```
 
 
 ---
@@ -531,23 +493,24 @@ ggplot(shrimp) +
 - Want that 2d smooth rather than `te(lat, long)`?
 - `d=` groups covariates
   - `te(x, y, year, d=c(2,1))` gives `x,y` smooth and `year` smooth tensor
-  - (assumes default `k=` and `bs=` for bases)
+- Assuming default `k=` and `bs=` for bases
 
 ---
 
 # Fiddling
 
 - Often fewer temporal replicates
-  - Less years than unique locations
-  - `k=` smaller for temporal covariate
+  - Fewer years than unique locations
+  - `k=` smaller for temporal covariate?
 - Use cubic spline basis for time?
   - simpler basis, even knot placement
 - When using `ti()` everything needs to match up!
 
 ---
 
-
 # 🦐🗺🗓
+
+Putting that together:
 
 
 ```r
