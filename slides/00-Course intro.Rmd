@@ -36,6 +36,14 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ---
 
+
+# Before we get started:
+
+* If you weren't able to get everything set up on your computer, you can use this online instance: https://mybinder.org/v2/gh/pedersen-fisheries-lab/DFO-3day-gam-workshop/master?urlpath=rstudio. We won't really be able to trouble-shoot it though. 
+
+* If you use the Binder instance: make sure you save your work outside the notebook, as when you close your window or go away from your computer, the instance will reset to the original state of the Github repository. 
+---
+
 # Who we are
 
 
@@ -44,6 +52,8 @@ knitr::opts_chunk$set(echo = FALSE)
 knitr::include_graphics("figures/epedersen.jpg")
 
 ```
+
+<br/>
 ----------------------------
 ```{r}
 knitr::include_graphics("figures/dlmiller.jpg")
@@ -52,11 +62,11 @@ knitr::include_graphics("figures/dlmiller.jpg")
 ]
 
 .right-column[
-Eric Pedersen is an assistant professor at Concordia University in Montreal. He studies rapid change in aquatic ecosystems, and developing methods for monitoring spatially structured communities
-
+.small[Eric Pedersen is an assistant professor at Concordia University in Montreal. He studies rapid change in aquatic ecosystems, and developing methods for monitoring spatially structured communities]
+<br/>
 ----------------------------
 
-Dave Miller is a research fellow at the Centre for Research into Ecological & Environmental Modelling and the School of Maths and Stats at the University of St Andrews. He primarily works on methods and software for animal abundance estimation, using GAMs wherever possible.
+.small[Dave Miller is a research fellow at the Centre for Research into Ecological & Environmental Modelling and the School of Maths and Stats at the University of St Andrews. He primarily works on methods and software for animal abundance estimation, using GAMs wherever possible.]
 
 ]
 
@@ -67,27 +77,31 @@ Dave Miller is a research fellow at the Centre for Research into Ecological & En
 # Who we are
 
 
-
 .left-column[ 
+
+<br/>
 ```{r}
 knitr::include_graphics("figures/noamross-eha-profile1-small.jpeg")
 
 ```
+
+<br/>
+<br/>
 ----------------------------
 ```{r}
-knitr::include_graphics("figures/dlmiller.jpg")
+knitr::include_graphics("figures/gavin.jpg")
 
 ```
 ]
 
 .right-column[
 
-Noam Ross is Principal Scientist for Computational Research at EcoHealth Alliance, a nonprofit working at the intersection of conservation and human health. He uses GAMs and other tools to study the distribution and dynamics of diseases in wildlife and predict the spillover of pathogens from animals to humans.
+.small[Noam Ross is Principal Scientist for Computational Research at EcoHealth Alliance, a nonprofit working at the intersection of conservation and human health. He uses GAMs and other tools to study the distribution and dynamics of diseases in wildlife and predict the spillover of pathogens from animals to humans.]
 
 
 ----------------------------
 
-Gavin Simpson ...
+.small[Gavin Simpson is Quantitative Environmental Scientist at the Institute of Environmental Change and Society (ICS) at the University of Regina. His research interests include dynamical systems ecology and abrupt ecological change, climate change effects on arctic lakes, and paleolimnology.]
 
 ]
 
@@ -118,8 +132,6 @@ Gavin Simpson ...
 * Our presentation will be recorded, and we'll provide answers to the exercises after each day
 
 ---
-
-
 
 
 # How we'll be running the workshop:
