@@ -255,9 +255,26 @@ We can modify this to add a *penalty* on the size of the model parameters:
 
 # How do we prevent overfitting?
 
+
+
+`\(\sum_{i=1}^n logLik (y_i) - \lambda\cdot \mathbf{\beta}'\mathbf{S}\mathbf{\beta}\)`
+
+&lt;br /&gt;
+
+--
+
+
 The penalty `\(\lambda\)` trades off between how well the model fits the observed data ( `\(\sum_{i=1}^n logLik (y_i)\)` ), and how wiggly the fitted function is ( `\(\mathbf{\beta}'\mathbf{S}\mathbf{\beta}\)` ). 
 
-The matrix `\(\mathbf{S}\)` measures how wiggly different function shapes are 
+&lt;br /&gt;
+--
+
+The matrix `\(\mathbf{S}\)` measures how wiggly different function shapes are. Each type of smoother has its own penalty matrix; `mgcv` handles this.
+
+&lt;br /&gt;
+--
+
+Some combinations of parameters correspond to a penalty value of zero; these combinations are called the *null space* of the smoother
 
 ---
 
@@ -302,8 +319,11 @@ You've probably seen random effects written like:
 
 * The basis functions are the different levels of the discrete variable: `\(f_j(x_i)=1\)` if `\(x_i\)` is in group `\(j\)`, `\(f_j(x_i)=1\)` if not
 
+--
+
 * The  `\(\beta_j\)` terms are the parameters the basis functions are being scaled by
 
+--
 
 * The variance of the random effect is equal to `\(1/\lambda\)`, so the `\(S\)` matrix for a random effect is just a diagonal matrix with `\(1/\sigma^2\)` on the diagonal
 
@@ -314,7 +334,11 @@ You've probably seen random effects written like:
 
 * By default, `mgcv` uses Generalized Cross-Validation, but this tends to work well only with really large data sets
 
+--
+
 * We will use restricted maximum likelihood (REML) throughout this workshop for fitting GAMs
+
+--
 
 * This is the same REML you may have used when fitting random effects models; again, smoothers in GAMs are basically a random effect in a different hat
 
