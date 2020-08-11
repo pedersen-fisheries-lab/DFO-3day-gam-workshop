@@ -4,19 +4,18 @@ title: Course syllabus
 
 # Overview
 
-We have 6 sessions, propose we have an "accelerate" type format where the intro stuff we take longer to cover and then give more of a tour of the complex bits, pointing participants to external info/have a q&a/allow them to dictate topics by poll before the last day.
+This is a 6-session workshop, developed with the goal of giving you enough GAM knowledge to feel comfortable fitting and working with GAMs in your day-to-day modelling practice. We will be covering a basic intro to GAM theory, with the rest focused on practical applications and a few advanced topics that we think might be interesting.
 
 # Learning Goals
 
 -   Understand the basic GAM model, basis functions, and penalties
--   Fit 1D, 2D, and tensor-product GAMs to normal and nonnormal data
+-   Fit 1D, 2D, and tensor-product GAMs to normal and non-normal data
 -   Plot GAM fits, and understand how to explain GAM outputs
 -   Diagnose common mispecification problems when fitting GAMs
--   Practice using GAMs for more complicated models
+-   Use GAMs to make predictions about new data, and assess model uncertainty
+-   See how more complicated GAM models can be used as part of a modern workflow
 
 # Syllabus
-
-(The last 3 sections are probably uneven and might need to be adjusted, but also we can have an extended Q&A in that last session which might be helpful.)
 
 ## 1. What is a GAM, and 1d smoothers
 
@@ -37,7 +36,7 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
     -   interpolation vs. linear models
     -   wiggles/penalties (non-technical)
 
--   adding more than one smooth to yr model
+-   adding more than one smooth to your model
 
 -   `summary` and `plot`
 
@@ -94,25 +93,10 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
 -   getting summaries (abundance estimates?)
 -   posterior simulation
 
-## 5. more complex models
 
-\*\* Lead instructor: Eric \*\*
+## 5. Connections, Q&A
 
--   other smoothers (each needs an example)
-
-    -   random effects
-    -   cyclic smoothers
-    -   soap
-    -   MRFs
-    -   factor-smooths
-
--   other responses:
-
-    -   `ocat`/gev/`mvn`/etc
-
-## 6. Connections, Q&A
-
-\*\* Lead instructor: David, all \*\*
+**Lead instructor: David, all **
 
 -   GAMs in context with other methods
 
@@ -127,6 +111,24 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
 
 -   Q&A
 
+
+
+## 6. more complex models for fisheries and aquatic ecology
+
+**Lead instructor: Eric **
+
+-   other smoothers
+
+    -   random effects
+    -   cyclic smoothers
+    -   Gaussian Markov Random Fields
+    -   factor-smooths
+    -   geographically weighted regression
+
+-   other responses:
+
+    -   `twlss`/`betar`
+
 # Other things we've collectively taught
 
 (Where we might look for example data, materials to reuse.)
@@ -135,6 +137,7 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
 
     -   [Original ESA workshop](https://eric-pedersen.github.io/mgcv-esa-workshop/)
     -   [Our paper on Hierarchical Generalized Additive Models](https://peerj.com/articles/6876/)
+
 
 -   Dave:
 
@@ -150,3 +153,13 @@ We have 6 sessions, propose we have an "accelerate" type format where the intro 
 
     -   [Blog: From the Bottom of the Heap](https://fromthebottomoftheheap.net/)
     -   [Online GAM workshop](https://www.youtube.com/watch?v=sgw4cu8hrZM&feature=youtu.be)
+
+
+# Other useful GAM resources:
+
+ - Simon Wood's book "Generalized Additive Models: An Introduction with R, Second Edition", is an incredibly useful tool for learning about GAMs, and covers all of this material in depth.
+ 
+- Hefley et al. (2017). "The basis function approach for modeling autocorrelation in ecological data". This is a great paper laying out how basis functions are used to model complex spatially structured systems. 
+
+
+- The `mgcVis` package has more tools for plotting GAM model outputs. See Fasiolo et al.'s paper 2019 "Scalable visualization methods for modern generalized additive models". 
