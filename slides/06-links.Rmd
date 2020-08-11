@@ -62,10 +62,16 @@ class: inverse middle center big-subsection
 
 # Lots of ways to fit flexible models!
 
-- INLA
-- kriging
-- maxent
-- mixed effects models
+- 💬 "Why not use..."
+  - INLA
+  - kriging
+  - MaxEnt
+  - mixed effects models
+  - 💬 "... my favourite method"
+
+<br/>
+
+(**TL;DR: they are all GAMs**)
 
 ---
 
@@ -75,27 +81,83 @@ class: inverse middle center big-subsection
 - GLMMs are "GLMs with random effects"
 - What is the general theme here?
 
+- Interested in a *design matrix*, $\mathbf{X}$
+- Impose some **structure** on the model
+
 ---
 
 # Basis-penalty smoothers
 
+For smoothers, we can always specify things as:
+
+1. basis functions, $b_k(x)$, which we put in the design matrix
+2. penalties, some function of $b_k(x)$s (usually integrals)
+
+We call these *basis-penalty smoothers* in general.
+
+In `mgcv` the `smooth.construct.*.smooth.spec` methods build design matrices and penalties.
 
 ---
 
-# Penalties are precisions
+# Bayesian links
 
+We generally can write our penalized log-likelihood as:
+
+$$
+l(\boldsymbol{\beta}) - \frac{1}{2} \sum_{m=1}^M \lambda_m \boldsymbol{\beta}^{\intercal} \boldsymbol{S}_m \boldsymbol{\beta}
+$$
+
+Exponentiating (& merging all the penalty stuff):
+
+$$
+\mathcal{L}_p (\boldsymbol{\beta}, \boldsymbol{\lambda} ) = \mathcal{L}( \boldsymbol{\beta} ) \exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )
+$$
+
+That $\exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )$ term looks **a lot** like a normal distribution...
+
+**A *prior*?** (https://arxiv.org/abs/1902.01330)
 
 ---
 
-# Covariance modelling
+# Penalties, covariances, precisions
+
+If $\exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )$ is a normal prior on the coefficients...
+
+- $\mathbf{S}$ is the penalty
+- $\Rightarrow$ $\mathbf{S}$ is the precision
+- $\Rightarrow$ $\mathbf{S}^{-1}$ is the covariance matrix!
+
+Thinking about things in terms of these priors means we can write lots of models as GAMs!
+
+---
+
+# Random effects
+
+- Fancy multi-level random effects models are just complicated $\mathbf{S}^{-1}$
+- We've seen Markov random fields, same idea!
+
 
 ---
 
 # Links to INLA, kriging
 
+- INLA fits "latent Gaussian additive models" $\Rightarrow$ GAMs!
+- INLA's SPDE method is a basis-penalty smoother
+  - https://arxiv.org/abs/2001.07623
+- Various kriging covariance functions can be written as basis-penalty smoothers
+  - related to thin plate splines!
+  
 ---
 
-# Bayesian connections
+# MaxEnt
+
+- Try to avoid presence only if you can!
+- MaxEnt is just a Poisson process model
+  - https://onlinelibrary.wiley.com/doi/10.1111/j.1541-0420.2012.01824.x
+  - https://projecteuclid.org/euclid.aoas/1287409378
+- We can write these as GLMs/GAMs!
+- (and we know how GLMs/GAMs work!)
+
 
 ---
 
@@ -107,16 +169,43 @@ class: inverse middle center big-subsection
 
 # Basis-penalty/covariance opens things up
 
-- Lots of software just wants design and covariance matrices
-- JAGS/`brms`/TMB
+Lots of software just want design and covariance matrices:
+
+- JAGS
+- `brms`
+- TMB
+- Stan
+- Nimble
 
 ---
 
 # The `jagam` idea
 
+- Write smooths as design matrices/precisions
+- Normal prior on model coefficients
+- Vague gamma prior on smoothing parameters
+- Fit in JAGS
+- `mgcv::jagam()` even generates the code for you!
+- https://www.jstatsoft.org/article/view/v075i07
+
+---
+
+# JAGS sucks
+
+- For complex models, JAGS can be very slow
+- Nimble can really help, and works with JAGS code!
+- Personal experience: 2 hour fit $\rightarrow$ 8 mins
+- https://r-nimble.org/quick-guide-for-converting-from-jags-or-bugs-to-nimble
+
+
 ---
 
 # We can do the same thing in TMB!
+
+- Template Model Builder is extremely fast
+- We can do a similar trick
+- the `GMRF` function and sparse matrices help
+- Worth it for **very** big models
 
 ---
 
