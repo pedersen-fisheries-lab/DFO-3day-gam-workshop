@@ -37,7 +37,7 @@ library('dplyr')
 library('gganimate')
 library('transformr')
 library('patchwork')
-
+library('splines2')
 opts_chunk$set(cache=TRUE, echo=FALSE)
 ```
 
@@ -366,7 +366,7 @@ set.seed(2)
 dat <- tibble(x = seq(-10,10, length=50),
        y = plogis(x,scale = 1)+rnorm(50,mean = 0,sd = 0.1))%>%
     mutate(y = ifelse(between(x,4,8)|between(x,-10,-9),NA,y))
-  dat[,paste0("degree=",10)] = predict(glm(y~splines::ns(x,df = 10),data=dat,
+  dat[,paste0("degree=",10)] = predict(glm(y~bSpline(x,df = 10),data=dat,
                                           na.action = na.exclude),newdata = dat)
 dat <- dat %>%
   gather(key = degree,value= value,-x,-y)
