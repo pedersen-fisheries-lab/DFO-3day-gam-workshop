@@ -575,9 +575,85 @@ shrimp_xyt &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 ![](02-extending-gams_files/figure-html/ti-xyt-plot-xy-t-1.svg)&lt;!-- --&gt;
 
 ---
+class: inverse middle center big-subsection
 
-  - centering constraints
-    - what does the intercept mean?
+## One more thing:&lt;br/&gt;centring constraints
+
+---
+
+# Adding terms to a model
+
+.pull-left[
+- Already know `s(x)` has "all the bits"
+- basis functions, intercept:
+- with multiple terms, can't have an intercept for each
+- identifiability
+]
+
+.pull-right[
+![](02-extending-gams_files/figure-html/centring-ex-1.svg)&lt;!-- --&gt;
+
+
+
+]
+---
+  
+# What does the intercept mean?
+
+.pull-left[
+- Solution: absorb all the intercepts into one: `\(\beta_0\)`
+- 💭 "base level of a factors"
+- shared over all smooths
+
+
+```r
+coef(shrimp_xyt)[1]
+```
+
+```
+## (Intercept) 
+##    4.895454
+```
+]
+
+.pull-right[
+![](02-extending-gams_files/figure-html/centring-ex3-1.svg)&lt;!-- --&gt;
+]
+
+---
+
+# Thinking further
+
+- Need to avoid identifiability issues: use constraints
+- Ensure that mean value `\(s(x)\)` is 0
+- (Shape isn't changed, just a vertical, *intercept*, shift)
+- Sometimes leads to surprises in your results, compared to their specification
+
+---
+class: inverse middle center big-subsection
+
+## Recap
+
+---
+
+# What did we learn?
+
+- set response distribution
+  - `family=` argument
+  - see `?family`
+- spatial smoothing
+  - `s(x,y)` for projected coordinates
+  - `te(lat, long)` for latitude and longitude (better to project?)
+- interactions
+  - `te(covar1, covar2, ...)`
+  - `ti()` to decompose the effects
+- space and time
+  - `te(x, y, time, d=c(2,1))`
+  - again `ti()` to decompose
+
+---
+
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
