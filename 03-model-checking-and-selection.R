@@ -94,3 +94,45 @@ temp <- gam(
   family = __YOUR_DISTRIBUTION_HERE__,
   method = "REML")
 
+
+# --- Back to it! Model selection ---
+
+trawl_data_extra <- trawl_data_2010
+trawl_data_extra$var1 <- rnorm(nrow(trawl_data_extra))
+
+
+shrimp_tw_all <- gam(
+  shrimp ~ offset(log(area_trawled)) + s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
+  data = trawl_data_extra,
+  family = tw,
+  method = "REML")
+
+summary(shrimp_tw_all)
+plot(shrimp_tw_all, pages = 1, residuals = TRUE, cex=0.5, pch=21, scheme = 2, scale = 0)
+
+shrimp_tw_sel <- gam(
+  shrimp ~  offset(log(area_trawled)) + s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
+  data = trawl_data_extra,
+  family = tw,
+  method = "REML",
+  select = TRUE)
+
+summary(shrimp_tw_sel)
+plot(shrimp_tw_sel, pages = 1, residuals = TRUE, cex=0.5, pch=21, scheme = 2, scale = 0)
+
+par(mfrow = c(2,2))
+gam.check(shrimp_tw_sel)
+par(mfrow = c(1,1))
+
+
+# ---- Exercise ----
+
+# Use double penalization to select variables that should remain in the
+# following model predicting bottom temperatures
+temp_all <- gam(
+  temp_bottom ~ s(depth) + s(x) + s(y) + s(stratum) + s(shrimp) + s(cod) + s(total) + s(richness),
+  data = trawl_data_2010,
+  family = gaussian,
+  method = "REML")
+
+# Using gam.check and concurvity, how would you improve this model?
