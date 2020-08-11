@@ -449,6 +449,12 @@ shrimp_ti <- gam(shrimp ~ offset(log(area_trawled)) +
 summary(shrimp_ti)
 ```
 
+---
+
+class: inverse middle center big-subsection
+
+## Now give it a try!
+
 
 ---
 class: inverse middle center big-subsection

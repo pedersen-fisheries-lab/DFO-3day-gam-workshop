@@ -1,64 +1,50 @@
+# example and practical scripts for part 02!
+
+# load requisite packages
+library('here')
+library('mgcv')
+library('ggplot2')
+
+# load the data
+shrimp <- read.csv(here("data/trawl_nl.csv"))
+# subset to just 2010's trawls
+shrimp2010 <- subset(shrimp, year==2010)
 
 
-# 2. "twiddling knobs in `gam`"
+## Exercise 1
 
-#  - moving beyond normal data (campylobacter?)
-#    - exponential family and conditionally exp family (i.e., `family` + `tw` + `nb`)
+# we tried fitting quasipoisson to the shrimp in the lecture
+# what about other distributions?
 
-# here we have trawls, so data are 0 or greater continuous
-# (assuming this is CPUE?)
+# 1. copy this model and try out using the tw() and nb() distributions in place
+#    of __OTHER_DISTRIBUTIONS__. Remember to rename your new models!
+# 2. look at the summary() output of these models and compare to those in
+#    the slides
+# 3. if you have time, plot the models too
 
-# can try modelling per year averages using different responses
-dat_yearly_cod <- dat %>%
-  select(year, cod) %>%
-  group_by(year) %>%
-  summarize(catch = mean(cod))
+# spatial shrimp biomass
+b_shrimp_template <- gam(shrimp ~ offset(log(area_trawled)) +
+                                  s(x, y),
+                         data=shrimp2010,
+                         family=__OTHER_DISTRIBUTIONS__,
+                         method="REML")
 
-plot(dat_yearly_cod$year, dat_yearly_cod$catch)
+# ---
 
-mod_yearly <- gam(catch ~ s(year,k=5),
-                  data=dat_yearly_cod,
-                  method="REML",
-                  family=tw())
+## Exercise 2
 
-summary(mod_yearly)
-plot(mod_yearly)
+# we looked at te() and ti() in the slides, let's try a model with
+# space and other effects
 
-# what about the spatial distribution of catches?
-#  - more dimensions (something spatial)
-#    - thin-plate 2d
+# 1. modify the model below to:
+#   a. have a smooth of x,y and a tensor of temperature and depth, you
+#       can choose whether the tensor is using te() or ti()
+#   b. use tw(), nb() or quasipoisson() as the response distribution
+# 2. look at the summary of this model and compare to those in the slides
+# 3. plot the results!
 
-ggplot(dat) +
-  geom_point(aes(x=long, y=lat, colour=cod), size=0.5) +
-  scale_colour_viridis_c(option="A", trans="log") +
-  facet_wrap(~year) +
-  theme_minimal()
-
-# let's just use one year for speed
-dat_2010 <- subset(dat, year==2010)
-
-# spatial model of cod (should project coords
-mod_space <- gam(cod ~ s(long, lat), data=dat_2010, method="REML",
-                 family=tw)
-summary(mod_space)
-
-# tensors
-mod_space_te <- gam(cod ~ te(long, lat), data=dat_2010, method="REML",
-                    family=tw)
-summary(mod_space_te)
-
-par(mfrow=c(1,2))
-plot(mod_space, scheme=2, main="tprs")
-plot(mod_space_te, scheme=2, main="tensor")
-
-
-
-#    - spatio-temporal modelling
-#      - `te(x,y,t)` constructions
-
-# this takes a while to fit, may want to make something simplier?
-mod_space_time <- gam(cod ~ te(long, lat, year, d=c(2,1), k=c(40, 10)),
-                      data=dat, method="REML", family=tw)
-summary(mod_space_time)
-
-plot(mod_space_time, scheme=2)
+mega_shrimp <- gam(shrimp ~ offset(log(area_trawled)) +
+                        __YOUR_FORMULA_HERE__,
+                data=shrimp2010,
+                family=__OTHER_DISTRIBUTIONS__,
+                method="REML")
