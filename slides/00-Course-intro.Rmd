@@ -89,7 +89,7 @@ knitr::include_graphics("figures/noamross-eha-profile1-small.jpeg")
 <br/>
 ----------------------------
 ```{r}
-knitr::include_graphics("figures/gavin.jpg")
+knitr::include_graphics("figures/glsimpson.jpg")
 
 ```
 ]
@@ -101,7 +101,7 @@ knitr::include_graphics("figures/gavin.jpg")
 
 ----------------------------
 
-.small[Gavin Simpson is Quantitative Environmental Scientist at the Institute of Environmental Change and Society (ICS) at the University of Regina. His research interests include dynamical systems ecology and abrupt ecological change, climate change effects on arctic lakes, and paleolimnology.]
+.small[Gavin Simpson is Quantitative Environmental Scientist at the Institute of Environmental Change and Society (IECS) at the University of Regina. His research interests include dynamical systems ecology and abrupt ecological change, climate change effects on arctic lakes, and paleolimnology.]
 
 ]
 
