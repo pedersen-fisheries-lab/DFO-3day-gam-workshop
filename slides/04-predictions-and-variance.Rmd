@@ -1,0 +1,660 @@
+---
+title: "Prediction & Variance"
+author: "Gavin L. Simpson"
+date: "August 13, 2020"
+output:
+  xaringan::moon_reader:
+    css: ['default', 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', 'slides.css']
+    lib_dir: libs
+    nature:
+      titleSlideClass: ['inverse','middle','left',my-title-slide]
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+      ratio: '16:9'
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(cache = TRUE, dev = 'svg', echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.height=6, fig.width = 1.777777*6)
+library('here')
+library('mgcv')
+library('gratia')
+## library('gamair')
+library('ggplot2')
+library('sf')
+## library('purrr')
+## library('mvnfast')
+## library("tibble")
+## library('cowplot')
+## library('tidyr')
+## library("knitr")
+## library("viridis")
+## library('readr')
+library('dplyr')
+## library('gganimate')
+
+## plot defaults
+theme_set(theme_minimal(base_size = 16, base_family = 'Fira Sans'))
+## constants
+anim_width <- 1000
+anim_height <- anim_width / 1.77777777
+anim_dev <- 'png'
+anim_res <- 200
+```
+
+# Recap &mdash; shrimp species richness
+
+.row[
+.col-6[
+```{r load-shrimp}
+shrimp <- read.csv(here('data', 'trawl_nl.csv'))
+```
+
+```{r shrimp-richness}
+m_rich <- gam(richness ~ s(year),
+              family = poisson,
+              method = "REML",
+              data = shrimp)
+```
+]
+.col-6[
+```{r richness-violin, fig.height=5, fig.width=5, echo=FALSE}
+ggplot(shrimp) +
+  geom_violin(aes(x = richness, y = factor(year))) +
+    labs(x = "Number of species", y = "Year")
+```
+]
+]
+
+---
+
+# Recap &mdash; spatio-temporal
+
+```{r biom-space-time-plot, fig.height=8, fig.width=15, echo=FALSE}
+coast <- read_sf(here("data/nl_coast.shp"))
+ggplot(shrimp) +
+  geom_point(aes(x = long, y = lat, size = shrimp), alpha=.5) +
+  geom_sf(data = coast) +
+  facet_wrap(~year, ncol = 5)
+```
+---
+
+# Recap &mdash; spatio-temporal model
+
+```{r fit-shrimp-space-time}
+m_spt <- gam(shrimp ~ offset(log(area_trawled)) +
+                 te(x, y, year, d = c(2,1), bs = c('tp', 'cr'), k = c(20, 5)),
+             data = shrimp,
+             family = tw,
+             method = "REML")
+```
+
+---
+
+# Confidence bands
+
+.row[
+.col-6[
+
+`plot()`
+
+```{r plot-richness-model}
+plot(m_rich)
+```
+]
+.col-6[
+
+`gratia::draw()`
+
+```{r draw-richness-model}
+draw(m_rich)
+```
+]
+]
+
+What do the bands represent?
+
+---
+
+# Confidence intervals for smooths
+
+Bands are a bayesian 95% credible interval on the smooth
+
+`plot.gam()` draws the band at &plusmn; **2** std. err.
+
+`gratia::draw()` draws them at $(1 - \alpha) / 2$ upper tail probability quantile of $\mathcal{N}(0,1)$
+
+`gratia::draw()` draws them at ~ &plusmn;**1.96** std. err. & user can change $\alpha$ via argument `ci_level`
+
+--
+
+So `gratia::draw()` draws them at ~ &plusmn;**2** st.d err
+
+---
+
+# Across the function intervals
+
+The *frequentist* coverage of the intervals is not pointwise &mdash; instead these credible intervals have approximately 95% coverage when *averaged* over the whole function
+
+Some places will have more than 95% coverage, other places less
+
+--
+
+Assumptions yielding this result can fail, where estimated smooth is a straight line
+
+--
+
+Correct this with `seWithMean = TRUE` in `plot.gam()` or `overall_uncertainty = TRUE` in `gratia::draw()`
+
+This essentially includes the uncertainty in the intercept in the uncertainty band
+
+---
+
+# Correcting for smoothness selection
+
+The defaults assume that the smoothness parameter(s) $\lambda_j$ are *known* and *fixed*
+
+--
+
+But we estimated them
+
+--
+
+Can apply a correction for this extra uncertainty via argument `unconditional = TRUE` in both `plot.gam()` and `gratia::draw()`
+
+---
+
+# But still, what do the bands represent?
+
+```{r plot-conf-band-plus-posterior-smooths, fig.height = 5}
+sm_fit <- evaluate_smooth(m_rich, 's(year)') # tidy data on smooth
+sm_post <- smooth_samples(m_rich, 's(year)', n = 20, seed = 42) # more on this later
+draw(sm_fit) + geom_line(data = sm_post, aes(x = .x1, y = value, group = draw),
+                         alpha = 0.3, colour = 'red')
+```
+
+---
+class: inverse middle center subsection
+
+# Using your shiny new model
+
+---
+
+# Predicting with `predict()`
+
+`plot.gam()` and `gratia::draw()` show the component functions of the model on the link scale
+
+Prediction allows us to evaluate the model at known values of covariates on the response scale
+
+Use the standard function `predict()`
+
+Provide `newdata` with a data frame of values of covariates
+
+---
+
+# `predict()`
+
+```{r predict-newdata}
+new_year <- with(shrimp, tibble(year = seq(min(year), max(year), length.out = 100)))
+pred <- predict(m_rich, newdata = new_year, se.fit = TRUE, type = 'link')
+pred <- bind_cols(new_year, as_tibble(as.data.frame(pred)))
+pred
+```
+
+---
+
+# `predict()` &rarr; response scale
+
+```{r predict-newdata-resp}
+ilink <- inv_link(m_rich)                         # inverse link function
+crit <- qnorm((1 - 0.89) / 2, lower.tail = FALSE) # or just `crit <- 2`
+pred <- mutate(pred, richness = ilink(fit),
+               lwr = ilink(fit - (crit * se.fit)), # lower...
+               upr = ilink(fit + (crit * se.fit))) # upper credible interval
+pred
+```
+
+---
+
+# `predict()` &rarr; plot
+
+Tidy objects like this are easy to plot with `ggplot()`
+
+```{r plot-predictions-richness, fig.height = 4}
+ggplot(pred, aes(x = year)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.2) +
+    geom_line(aes(y = richness)) + labs(y = "Species richness", x = NULL)
+```
+
+---
+
+# `predict()` for space and time
+
+This idea is very general;  spatiotemporal model needs a grid of x,y coordinates for each year
+
+```{r spt-example-predict}
+sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
+                                   year = unique(year), area_trawled = median(area_trawled)))
+sp_pred <- predict(m_spt, newdata = sp_new, se.fit = TRUE) # link scale is default
+sp_pred <- bind_cols(as_tibble(sp_new), as_tibble(as.data.frame(sp_pred)))
+sp_pred
+```
+
+---
+
+# `predict()` &rarr; response scale
+
+```{r spt-example-response-scale}
+ilink <- inv_link(m_spt)
+too_far <- exclude.too.far(sp_pred$x, sp_pred$y, shrimp$x, shrimp$y, dist = 0.1)
+sp_pred <- sp_pred %>% mutate(biomass = ilink(fit),
+                              biomass = case_when(too_far ~ NA_real_,
+                                                  TRUE ~ biomass))
+sp_pred
+```
+
+---
+
+# `predict()` &rarr; plot
+
+```{r spt-example-plot, fig.height = 5.5}
+ggplot(sp_pred, aes(x = x, y = y, fill = biomass)) + geom_raster() +
+    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) + coord_equal()
+```
+
+---
+class: inverse middle center subsection
+
+# Your turn!
+
+---
+
+# Visualizing the trend?
+
+We have this model
+
+.smaller[
+```{r show-m-spt}
+m_spt
+```
+]
+
+How would you visualize the average change in biomass over time?
+
+---
+
+# Welcome back old friend
+
+One way is to  decompose the spatio-temporal function in main effects plus interaction
+
+```{r shrimp-ti-model}
+m_ti <- gam(shrimp ~ offset(log(area_trawled)) +
+                ti(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 5)) +
+                s(x, y, bs = "tp", k = 20) +
+                s(year, bs = "cr", k = 5),
+            data = shrimp, family = tw, method = "REML")
+```
+
+and predict from the model using only the marginal effect of `s(year)`
+
+---
+
+# `predict()` with `exclude`
+
+.row[
+.col-6[
+We can exclude the spatial & spatiotemporal terms from predictions using `exclude`
+
+**Step 1** run `summary()` on model & note the names of the smooth you *don't* want &rarr;
+]
+.col-6[
+.smaller[
+```{r summary-spt-ti}
+summary(m_ti)
+```
+]
+]
+]
+
+---
+
+# `predict()` with `exclude` &mdash; Step 2 *predict*
+
+Prediction data only need dummy values for `x` and `y`
+
+```{r pred-data-ti-model}
+ti_new <- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100),
+                                   area_trawled = median(area_trawled)))
+
+{{ti_pred <- predict(m_ti, newdata = ti_new, se.fit = TRUE, exclude = c("ti(x,y,year)", "s(x,y)"))}}
+
+ti_pred <- bind_cols(as_tibble(ti_new), as_tibble(as.data.frame(ti_pred))) %>%
+    mutate(biomass = ilink(fit),
+           lwr = ilink(fit - (crit * se.fit)),
+           upr = ilink(fit + (crit * se.fit)))
+```
+
+`exclude` takes a character vector of terms to exclude &mdash; `predict()` sets the contributions of those terms to 0
+
+Could also use `terms = "s(year)"` to select only the named smooths
+
+```{r pred-data-ti-model-terms, results = "hide"}
+predict(m_ti, newdata = ti_new, se.fit = TRUE, terms = "s(year)")
+```
+
+---
+
+# `predict()` with `exclude`&mdash; Step 3 *plot it!*
+
+```{r plot-ti-marginal-trend, fig.height = 5}
+ggplot(ti_pred, aes(x = year)) + geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
+    geom_line(aes(y = biomass)) + labs(y = "Biomass", x = NULL)
+```
+
+---
+class: inverse middle center subsection
+
+# Your turn!
+
+---
+class: inverse middle center subsection
+
+# Posterior simulation
+
+---
+
+# Remember this?
+
+```{r plot-conf-band-plus-posterior-smooths, fig.height = 5, echo = FALSE}
+```
+
+--
+
+Where did the red lines come from?
+
+---
+
+# Posterior distributions
+
+Each red line is a draw from the *posterior distribution* of the smooth
+
+Remember the $\beta_j$ from Eric's opening lecture yesterday?
+
+Together they are distributed *multivariate normal* with
+
+* mean vector given by $\hat{\beta}_j$
+* covariance matrix $\boldsymbol{\hat{V}}_{\beta}$
+
+$$\text{MVN}(\boldsymbol{\hat{\beta}}, \boldsymbol{\hat{V}}_{\beta})$$
+
+--
+
+The model as a whole has a posterior distribution too
+
+--
+
+We can simulate data from the model by taking draws from the posterior distribution
+
+---
+
+# Posterior simulation for a smooth
+
+Sounds fancy but it's only just slightly more complicated than using `rnorm()`
+
+To do this we need a few things:
+
+1. The vector of model parameters for the smooth, $\boldsymbol{\hat{\beta}}$
+2. The covariance matrix of those parameters, $\boldsymbol{\hat{V}}_{\beta}$
+3. A matrix $\boldsymbol{X}_p$ that maps parameters to the linear predictor for the smooth
+
+$$\boldsymbol{\hat{\eta}}_p = \boldsymbol{X}_p \boldsymbol{\hat{\beta}}$$
+
+--
+
+Let's do this for `m_rich`
+
+---
+
+# Posterior sim for a smooth &mdash; step 1
+
+The vector of model parameters for the smooth, $\boldsymbol{\hat{\beta}}$
+
+```{r richness-coefs}
+sm_year <- get_smooth(m_rich, "s(year)") # extract the smooth object from model
+idx <- gratia:::smooth_coefs(sm_year)    # indices of the coefs for this smooth
+idx
+
+beta <- coef(m_rich)                     # vector of model parameters
+```
+
+---
+
+# Posterior sim for a smooth &mdash; step 2
+
+The covariance matrix of the model parameters, $\boldsymbol{\hat{V}}_{\beta}$
+
+```{r richness-vcov}
+Vb <- vcov(m_rich) # default is the bayesian covariance matrix
+```
+---
+
+# Posterior sim for a smooth &mdash; step 3
+
+A matrix $\boldsymbol{X}_p$ that maps parameters to the linear predictor for the smooth
+
+We get $\boldsymbol{X}_p$ using the `predict()` method with `type = "lpmatrix"`
+
+```{r richness-xp-matrix}
+new_year <- with(shrimp, tibble(year = seq_min_max(year, n = 100)))
+Xp <- predict(m_rich, newdata = new_year, type = 'lpmatrix')
+dim(Xp)
+```
+
+---
+
+# Posterior sim for a smooth &mdash; step 4
+
+Take only the columns of $\boldsymbol{X}_p$ that are involved in the smooth of `year`
+
+```{r richness-reduce-xp}
+Xp <- Xp[, idx, drop = FALSE]
+dim(Xp)
+```
+
+---
+
+# Posterior sim for a smooth &mdash; step 5
+
+Simulate parameters from the posterior distribution of the smooth of `year`
+
+```{r richness-simulate-params}
+set.seed(42)
+beta_sim <- rmvn(n = 20, beta[idx], Vb[idx, idx, drop = FALSE])
+dim(beta_sim)
+```
+
+Simulating many sets (20) of new model parameters from the estimated parameters and their uncertainty (covariance)
+
+Result is a matrix where each row is a set of new model parameters, each consistent with the fitted smooth
+
+---
+
+# Posterior sim for a smooth &mdash; step 6
+
+.row[
+.col-6[
+Form $\boldsymbol{\hat{\eta}}_p$, the posterior draws for the smooth
+
+```{r richness-posterior-draws, fig.height = 5, fig.show = 'hide'}
+sm_draws <- Xp %*% t(beta_sim)
+dim(sm_draws)
+matplot(sm_draws, type = 'l')
+```
+
+A bit of rearranging is needed to plot with `ggplot()`
+]
+
+.col-6[
+```{r richness-posterior-draws, fig.height = 5, fig.width = 5, echo = FALSE, results = 'hide'}
+```
+]
+
+]
+
+--
+
+Or use `smooth_samples()`
+
+---
+
+# Posterior sim for a smooth &mdash; steps 1&ndash;6
+
+```{r plot-posterior-smooths, fig.height = 5}
+sm_post <- smooth_samples(m_rich, 's(year)', n = 20, seed = 42)
+draw(sm_post)
+```
+
+---
+
+# Posterior simulation from the model
+
+Simulating from the posterior distribution of the model requires 1 modification of the recipe for a smooth and one extra step
+
+We want to simulate new values for all the parameters in the model, not just the ones involved in a particular smooth
+
+We want to simulate *new response data* from the model and the simulated parameters, not just new smooths
+
+---
+
+# Posterior simulation from the model
+
+```{r posterior-sim-model}
+beta <- coef(m_rich)   # vector of model parameters
+Vb <- vcov(m_rich)     # default is the bayesian covariance matrix
+Xp <- predict(m_rich, type = 'lpmatrix')
+set.seed(42)
+beta_sim <- rmvn(n = 20, beta, Vb) # simulate parameters
+eta_p <- Xp %*% t(beta_sim)        # form linear predictor values
+mu_p <- inv_link(m_rich)(eta_p)    # apply inverse link function
+
+## Simulate new Poisson data
+pred_mat <- matrix(0, ncol = nrow(beta_sim), nrow = nrow(Xp))
+for (i in seq_along(nrow(beta_sim))) {
+    pred_mat[, i] <- rpois(n = nrow(Xp), lambda = mu_p[, i])
+}
+
+head(pred_mat[, 1])   # simulate count data for posterior draw 1
+head(shrimp$richness) # observed count data
+```
+
+---
+
+# Posterior simulation from the model
+
+From the next version of *gratia* you'll be able to do this as simply as with `smooth_samples()` using `posterior_samples()`
+
+---
+
+# Why is this of interest?
+
+Say you wanted to get an estimate for the total biomass of shrimp over the entire region of the trawl survey for 2007
+
+You could predict for the spatial grid for `year == 2007` using code shown previously and sum the predicted biomass values over all the grid cells
+
+--
+
+**Easy**
+
+--
+
+But what if you also wanted the uncertainty in that estimate?
+
+--
+
+**Hard**
+
+--
+
+**Math**  😱😱😱 "something, something, delta method, something" 😱😱😱 
+
+---
+
+# Posterior simulation makes this easy
+
+1. Take a draw from the posterior distribution of the model
+2. Use the posterior draw to predict biomass for each grid cell
+3. Sum the predicted biomass values over all grid cells
+4. Store the total biomass value
+5. Repeat 1&ndash;4 a lot of times to get posterior distribution of total biomass
+6. Summarize the total biomass posterior
+    * Estimated total biomass is the mean of the total biomass posterior
+	* Uncertainty is some lower/upper tail probability quantiles of the posterior
+
+---
+
+# Let's do it
+
+```{r total-biomass-posterior-1}
+sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
+                                   year = 2007, area_trawled = median(area_trawled)))
+Xp <- predict(m_spt, newdata = sp_new, type = "lpmatrix")
+
+## work out now which points are too far now
+too_far <- exclude.too.far(sp_new$x, sp_new$y, shrimp$x, shrimp$y, dist = 0.1)
+
+beta <- coef(m_spt)   # vector of model parameters
+Vb <- vcov(m_spt)     # default is the bayesian covariance matrix
+set.seed(42)
+beta_sim <- rmvn(n = 1000, beta, Vb) # simulate parameters
+eta_p <- Xp %*% t(beta_sim)        # form linear predictor values
+mu_p <- inv_link(m_spt)(eta_p)     # apply inverse link function
+```
+
+At this stage columns of `mu_p` contain the expected or mean biomass for each grid cell per area trawled
+
+Could sum the columns of `mu_p` and summarize
+
+---
+
+# Summarize the expected biomass
+
+```{r total-biomass-posterior-2, dependson = -1}
+mu_copy <- mu_p              # copy mu_p
+mu_copy[too_far, ] <- NA     # set cells too far from data to be NA
+total_biomass <- colSums(mu_copy, na.rm = TRUE)  # total biomass over the region
+
+mean(total_biomass)
+quantile(total_biomass, probs = c(0.025, 0.975))
+```
+
+---
+
+# Simulate data from posterior
+
+```{r total-biomass-posterior-3, dependson = -1}
+rand_fun <- fix.family.rd(family(m_spt))$rd # Tweedie RNG function
+scale <- m_spt$sig2   # dispersion parameter
+wts <- weights(m_spt) # observation weights for data; all 1 in this case
+
+## Simulate new Tweedie data
+pred_mat <- matrix(0, ncol = nrow(beta_sim), nrow = nrow(Xp))
+for (i in seq_along(nrow(beta_sim))) {
+    pred_mat[, i] <- rand_fun(mu = mu_p[, i], wt = wts, scale = scale)
+}
+```
+
+---
+
+# Summarize the expected biomass
+
+```{r total-biomass-posterior-4, dependson = -1}
+pred_copy <- pred_mat      # copy mu_p
+pred_copy[too_far, ] <- NA # set cells too far from data to be NA
+total_biomass <- colSums(pred_copy, na.rm = TRUE)  # total biomass over the region
+
+mean(total_biomass)
+quantile(total_biomass, probs = c(0.025, 0.975))
+```
