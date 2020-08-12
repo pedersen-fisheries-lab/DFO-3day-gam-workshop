@@ -36,6 +36,7 @@ library('readr')
 library('dplyr')
 library('gganimate')
 library('xaringan')
+library('sf')
 ## plot defaults
 theme_set(theme_minimal(base_size = 16, base_family = 'Fira Sans'))
 ## constants
@@ -294,15 +295,12 @@ ggplot(shrimp2010) +
 
 # 🦐🗺
 
-Trying out quasi-poisson
-
-- Note we need to add an `offset` for effort!
+Trying out quasi-poisson response
 
 
 .pull-left[
 ```{r shrimpmod}
-b_shrimp <- gam(shrimp ~ offset(log(area_trawled)) +
-                  s(x, y),
+b_shrimp <- gam(shrimp ~ s(x, y),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -375,8 +373,7 @@ class: inverse middle center big-subsection
 
 .pull-right[
 ```{r tensor, echo=FALSE, results='hide', fig.width=8, fig.height=6, messages=FALSE, warning=FALSE}
-b_shrimp_ll_ti <- gam(shrimp ~ offset(log(area_trawled)) +
-                        ti(temp_bottom, depth) + ti(temp_bottom) + ti(depth),
+b_shrimp_ll_ti <- gam(shrimp ~ ti(temp_bottom, depth) + ti(temp_bottom) + ti(depth),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -399,8 +396,7 @@ Just like `s()`:
 
 
 ```{r te-ex}
-shrimp_te <- gam(shrimp ~ offset(log(area_trawled)) +
-                        te(temp_bottom, depth),
+shrimp_te <- gam(shrimp ~ te(temp_bottom, depth),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -433,9 +429,8 @@ summary(shrimp_te)
 - `te(x, y) = ti(x, y) + ti(x) + ti(y)`
 
 ```{r tiex}
-shrimp_ti <- gam(shrimp ~ offset(log(area_trawled)) +
-                        ti(temp_bottom, depth) +
-                        ti(temp_bottom) + ti(depth),
+shrimp_ti <- gam(shrimp ~ ti(temp_bottom, depth) +
+                          ti(temp_bottom) + ti(depth),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -502,10 +497,10 @@ ggplot(shrimp) +
 Putting that together:
 
 ```{r ti-xyt}
-shrimp_xyt <- gam(shrimp ~ offset(log(area_trawled)) +
-                        ti(x, y, year, d=c(2,1), bs=c("tp", "cr"), k=c(20, 5)) +
-                        ti(x, y, d=2, bs="tp", k=20) +
-                        ti(year, d=1, bs="cr", k=5),
+shrimp_xyt <- gam(shrimp ~ ti(x, y, year, d=c(2,1), 
+                              bs=c("tp", "cr"), k=c(20, 5)) +
+                           ti(x, y, d=2, bs="tp", k=20) +
+                           ti(year, d=1, bs="cr", k=5),
                 data=shrimp,
                 family=quasipoisson,
                 method="REML")
@@ -621,7 +616,4 @@ class: inverse middle center big-subsection
 - space and time
   - `te(x, y, time, d=c(2,1))`
   - again `ti()` to decompose
-
----
-
 

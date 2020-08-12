@@ -4,6 +4,7 @@
 library('here')
 library('mgcv')
 library('ggplot2')
+library('gratia')
 
 # load the data
 shrimp <- read.csv(here("data/trawl_nl.csv"))
@@ -23,12 +24,33 @@ shrimp2010 <- subset(shrimp, year==2010)
 # 3. if you have time, plot the models too
 
 # spatial shrimp biomass
-b_shrimp_template <- gam(shrimp ~ offset(log(area_trawled)) +
-                                  s(x, y),
+b_shrimp_template <- gam(shrimp ~ s(x, y),
                          data=shrimp2010,
                          family=__OTHER_DISTRIBUTIONS__,
                          method="REML")
 
+## solution
+
+# negative binomial
+b_shrimp_nb <- gam(shrimp ~ s(x, y),
+                         data=shrimp2010,
+                         family=nb(),
+                         method="REML")
+summary(b_shrimp_nb)
+
+# compare plot to gratia output
+draw(b_shrimp_nb) + coord_equal()
+plot(b_shrimp_nb, scheme=2, asp=1)
+
+
+# tweedie
+b_shrimp_tw <- gam(shrimp ~ s(x, y),
+                         data=shrimp2010,
+                         family=tw(),
+                         method="REML")
+summary(b_shrimp_tw)
+
+draw(b_shrimp_tw) + coord_equal()
 # ---
 
 ## Exercise 2

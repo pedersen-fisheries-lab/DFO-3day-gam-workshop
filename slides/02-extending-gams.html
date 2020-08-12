@@ -252,16 +252,13 @@ Not normal, not integer!
 
 # 🦐🗺
 
-Trying out quasi-poisson
-
-- Note we need to add an `offset` for effort!
+Trying out quasi-poisson response
 
 
 .pull-left[
 
 ```r
-b_shrimp &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                  s(x, y),
+b_shrimp &lt;- gam(shrimp ~ s(x, y),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -310,22 +307,22 @@ plot(b_shrimp, scheme=2, asp=1)
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + s(x, y)
+## shrimp ~ s(x, y)
 ## 
 ## Parametric coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   5.0041     0.2346   21.33   &lt;2e-16 ***
+## (Intercept)   3.6137     0.2292   15.77   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##          edf Ref.df   F p-value    
-## s(x,y) 25.62  27.71 6.3  &lt;2e-16 ***
+##          edf Ref.df     F p-value    
+## s(x,y) 25.63  27.72 6.194  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.271   Deviance explained = 54.3%
-## -REML = 1467.8  Scale est. = 178.15    n = 482
+## R-sq.(adj) =  0.289   Deviance explained = 54.2%
+## -REML = 1464.1  Scale est. = 176.14    n = 482
 ```
 
 ---
@@ -375,8 +372,7 @@ Just like `s()`:
 
 
 ```r
-shrimp_te &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                        te(temp_bottom, depth),
+shrimp_te &lt;- gam(shrimp ~ te(temp_bottom, depth),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -393,22 +389,22 @@ shrimp_te &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + te(temp_bottom, depth)
+## shrimp ~ te(temp_bottom, depth)
 ## 
 ## Parametric coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)  
-## (Intercept)  -0.2359     0.1306  -1.807   0.0714 .
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  -1.7075     0.1205  -14.17   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##                         edf Ref.df    F p-value    
-## te(temp_bottom,depth) 14.07  15.85 3357  &lt;2e-16 ***
+##                        edf Ref.df    F p-value    
+## te(temp_bottom,depth) 14.2  15.96 4040  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.314   Deviance explained =   59%
-## -REML = 1401.6  Scale est. = 0.51466   n = 482
+## R-sq.(adj) =  0.351   Deviance explained = 60.3%
+## -REML = 1390.3  Scale est. = 0.42049   n = 482
 ```
 
 ---
@@ -431,9 +427,8 @@ shrimp_te &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 
 
 ```r
-shrimp_ti &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                        ti(temp_bottom, depth) +
-                        ti(temp_bottom) + ti(depth),
+shrimp_ti &lt;- gam(shrimp ~ ti(temp_bottom, depth) +
+                          ti(temp_bottom) + ti(depth),
                 data=shrimp2010,
                 family=quasipoisson,
                 method="REML")
@@ -450,25 +445,24 @@ shrimp_ti &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + ti(temp_bottom, depth) + 
-##     ti(temp_bottom) + ti(depth)
+## shrimp ~ ti(temp_bottom, depth) + ti(temp_bottom) + ti(depth)
 ## 
 ## Parametric coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   -1.302      0.123  -10.59   &lt;2e-16 ***
+## (Intercept)  -2.4972     0.1234  -20.23   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
 ##                         edf Ref.df      F p-value    
-## ti(temp_bottom,depth) 6.410  7.756 2421.6  &lt;2e-16 ***
-## ti(temp_bottom)       3.054  3.341  901.1  &lt;2e-16 ***
-## ti(depth)             3.778  3.939 3097.0  &lt;2e-16 ***
+## ti(temp_bottom,depth) 6.642  7.970 2440.7  &lt;2e-16 ***
+## ti(temp_bottom)       2.978  3.266  787.2  &lt;2e-16 ***
+## ti(depth)             3.778  3.939 3017.7  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.316   Deviance explained =   59%
-## -REML = 1401.7  Scale est. = 0.26644   n = 482
+## R-sq.(adj) =  0.352   Deviance explained = 60.3%
+## -REML = 1390.3  Scale est. = 0.26728   n = 482
 ```
 
 ---
@@ -520,10 +514,10 @@ Putting that together:
 
 
 ```r
-shrimp_xyt &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                        ti(x, y, year, d=c(2,1), bs=c("tp", "cr"), k=c(20, 5)) +
-                        ti(x, y, d=2, bs="tp", k=20) +
-                        ti(year, d=1, bs="cr", k=5),
+shrimp_xyt &lt;- gam(shrimp ~ ti(x, y, year, d=c(2,1), 
+                              bs=c("tp", "cr"), k=c(20, 5)) +
+                           ti(x, y, d=2, bs="tp", k=20) +
+                           ti(year, d=1, bs="cr", k=5),
                 data=shrimp,
                 family=quasipoisson,
                 method="REML")
@@ -540,26 +534,26 @@ shrimp_xyt &lt;- gam(shrimp ~ offset(log(area_trawled)) +
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + ti(x, y, year, d = c(2, 
-##     1), bs = c("tp", "cr"), k = c(20, 5)) + ti(x, y, bs = "tp", 
-##     k = 20) + ti(year, bs = "cr", k = 5)
+## shrimp ~ ti(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 
+##     5)) + ti(x, y, d = 2, bs = "tp", k = 20) + ti(year, d = 1, 
+##     bs = "cr", k = 5)
 ## 
 ## Parametric coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   2.8359     0.1459   19.43   &lt;2e-16 ***
+## (Intercept)  3.47914    0.04048   85.95   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##                  edf  Ref.df     F p-value    
-## ti(x,y,year)  55.837  64.084 140.4  &lt;2e-16 ***
-## ti(x,y)      190.774 209.393 172.2  &lt;2e-16 ***
-## ti(year)       3.881   3.953 648.0  &lt;2e-16 ***
+##                 edf Ref.df      F p-value    
+## ti(x,y,year) 44.318 53.968  74.52  &lt;2e-16 ***
+## ti(x,y)      18.804 18.975 513.48  &lt;2e-16 ***
+## ti(year)      3.795  3.921 284.67  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.549   Deviance explained = 75.6%
-## -REML =  12403  Scale est. = 10.709    n = 4152
+## R-sq.(adj) =  0.243   Deviance explained = 46.7%
+## -REML =  13546  Scale est. = 25.229    n = 4152
 ```
 
 ---
@@ -618,7 +612,7 @@ coef(shrimp_xyt)[1]
 
 ```
 ## (Intercept) 
-##    4.895454
+##    3.479143
 ```
 ]
 
@@ -656,9 +650,6 @@ class: inverse middle center big-subsection
 - space and time
   - `te(x, y, time, d=c(2,1))`
   - again `ti()` to decompose
-
----
-
 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
