@@ -303,7 +303,7 @@ mod <- gam(y~s(x,k=10),data=dat)
 
 ```{r eval = FALSE,include=TRUE,echo=TRUE}
 
-glm(y ~ I(x) + I(x^2) + I(x^2) +...)
+glm(y ~ I(x) + I(x^2) + I(x^3) +...)
 
 ```
 

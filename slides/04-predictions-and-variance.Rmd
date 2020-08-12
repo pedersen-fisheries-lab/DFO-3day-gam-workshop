@@ -1,5 +1,5 @@
 ---
-title: "Prediction & Variance"
+title: "Prediction & Model Uncertainty"
 author: "Gavin L. Simpson"
 date: "August 13, 2020"
 output:

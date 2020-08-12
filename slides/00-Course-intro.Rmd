@@ -1,6 +1,6 @@
 ---
 title: "Generalized Additive Models"
-date: "1000&ndash;1230 CST (1600&ndash;1830 UTC) July 30th, 2020"
+date: "12&ndash;14 Aug, 2020"
 output:
   xaringan::moon_reader:
     css: ['default', 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', 'slides.css']
