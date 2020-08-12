@@ -3,8 +3,8 @@
   <head>
     <title>Model Checking and Selection</title>
     <meta charset="utf-8" />
-    <meta name="author" content="Gavin Simpson" />
-    <script src="libs/header-attrs/header-attrs.js"></script>
+    <meta name="author" content="Noam Ross" />
+    <meta name="date" content="2020-08-13" />
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
@@ -14,8 +14,8 @@
 class: inverse, middle, left, my-title-slide, title-slide
 
 # Model Checking and Selection
-### Gavin Simpson
-### 1000–1230 CST (1600–1830 UTC) July 30th, 2020
+### Noam Ross
+### August 13, 2020
 
 ---
 
@@ -23,24 +23,524 @@ class: inverse middle center big-subsection
 
 
 
-# Welcome
-
-???
-
-I'm live streaming today from Treaty 4 lands. These are the territories of the nêhiyawak (nay-hi-yuh-wuk, Cree), Anihšināpēk (uh-nish-i-naa-payk, Saulteaux), Dakota, Lakota, Nakoda, and the homeland of the Métis/Michif Nation. Today, these lands continue to be the shared territory of many diverse peoples.
+# Good Morning!
 
 ---
 
 # Logistics
 
-## Slides
+## Today:
 
-Slidedeck: [bit.ly/gam-webinar](https://bit.ly/gam-webinar)
-Sources: [bit.ly/gam-webinar-git](https://bit.ly/gam-webinar-git)
+-  Morning: Model Checking and Variable Selecton with Me
+-  Afternoon: Prediction and Variation with Gavin
 
-Direct download a ZIP of everything: [bit.ly/gam-webinar-zip](https://bit.ly/gam-webinar-zip)
+## Reminder
 
-Unpack the zip &amp; remember where you put it
+-  Links seminar materials in the "Workshops Material" channel
+-  Ask questions in the "General" Channel
+-  Software problems? Use the online RStudio instance: [bit.ly/gam-rstudio](https://bit.ly/gam-rstudio)
+
+---
+
+# Review
+
+.pull-left[
+- Basis Functions
+- Penalization
+- Smooths with `s()`, `te()`, and `ti()` many distributions!
+
+
+```r
+shrimp &lt;- read.csv(here("data/trawl_nl.csv"))
+shrimp2010 &lt;- subset(shrimp, year==2010)
+b_shrimp &lt;- 
+  gam(shrimp ~ 
+        offset(log(area_trawled))
+        + s(x, y),
+      data=shrimp2010,
+      family=quasipoisson,
+      method="REML")
+```
+]
+
+.pull-right[
+
+```r
+plot(b_shrimp, scheme = 2, asp=1)
+```
+
+![](03-model-checking-and-selection_files/figure-html/plot-effect-1.svg)&lt;!-- --&gt;
+]
+
+---
+class: inverse middle center subsection
+
+# Model checking
+
+
+
+---
+
+# Are predictions or inference any good?
+
+Only if model specification matches the data-generating process
+
+![](03-model-checking-and-selection_files/figure-html/misspecify-1.svg)&lt;!-- --&gt;
+
+---
+background-image: url(figures/mug.jpg)
+background-size: contain
+---
+
+# How do we test for misspecification?
+
+-  Examine residuals and diagostic plots: `gam.check()` part 1
+
+-  Test for residual patterns in data: `gam.check()` part 2
+
+-  Look for confounding relationships amongst variables: `concurvity()`
+
+???
+
+
+
+---
+class: inverse middle center subsection
+
+# Using `gam.check()` part 1: Visual Checks
+
+---
+
+# gam.check() plots
+
+The `gam.check()` function runs on your fit model creates 4 plots: 
+
+1. **Quantile-quantile plots** of theoretical vs. actual residuals should follow 1-1 line.
+
+2. **Histogram of residuals** should be symmetrical and gaussian.
+
+3. **Residuals vs. linear predictor** should be homogeneous across range of model. (_Usually! Not always so in count models._)
+
+4. **Observed vs. fitted values** ideally follows 1-1 line, the tighter the better!
+
+`gam.check()` uses _deviance residuals_ by default
+
+---
+
+# Gaussian model on Gaussian data
+
+
+```r
+norm_model &lt;- gam(y_norm ~ s(x1, k=12) + s(x2, k=12), method = 'REML')
+gam.check(norm_model, rep = 500)
+```
+
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-1.svg)&lt;!-- --&gt;
+
+---
+
+# Negative binomial data, Poisson model
+
+
+```r
+pois_model &lt;- gam(y_negbinom ~ s(x1, k=12) + s(x2, k=12), family=poisson, method= 'REML')
+gam.check(pois_model, rep = 500)
+```
+
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-1.svg)&lt;!-- --&gt;
+
+---
+
+# NB data, NB model
+
+
+```r
+negbin_model &lt;- gam(y_negbinom ~ s(x1, k=12) + s(x2, k=12), family = nb, method = 'REML')
+gam.check(negbin_model, rep = 500)
+```
+
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-1.svg)&lt;!-- --&gt;
+
+---
+# A (sometimes) helpful addition: DHARMa
+
+
+.pull-left[
+
+The **DHARMa** package generates _quantile residual plots_ that can be more intuitive to read for non-normal data.
+
+- Simulated residuals should be uniformly distributed
+- Includes tests for patterns in residuals
+- Currently only supports some distributions in mgcv (binomial, poisson)
+
+]
+
+.pull-right[
+
+```r
+library(DHARMa)
+sim_resids &lt;- simulateResiduals(pois_model)
+plotResiduals(sim_resids)
+```
+
+![](03-model-checking-and-selection_files/figure-html/dharma2-1.svg)&lt;!-- --&gt;
+]
+
+???
+
+Simulated data
+
+
+
+---
+class: inverse middle center subsection
+
+# `gam.check()` part 2: do you have the right functional form?
+
+---
+
+# How good is the smooth?
+
+- Many choices influence whether a smooth is right for the data, one key one is **k**, the number of basis functions used to construct the smooth.
+
+- **k** sets the _maximum_ wiggliness of a smooth.  The smoothing penalty `\((\lambda)\)` remove "extra wiggliness" (_up to a point!_)
+
+- We want enough **k** to model all our complexity, but larger **k** means larger computation time (sometimes `\(O(n^2)\)`)
+
+- Set **k** per term in your model: `s(x, k=10)` or `s(x, y, k=100)`.  Default values must be checked!
+
+---
+
+# Checking basis size
+
+`gam.check()` prints diagnostics for basis size. Significant values indicate non-random residual patterns not captured by smooths.
+
+
+
+```r
+norm_model_1 &lt;- gam(y_norm~s(x1, k = 4) + s(x2, k = 4), method = 'REML')
+gam.check(norm_model_1)
+```
+
+```
+## 
+## Method: REML   Optimizer: outer newton
+## full convergence after 8 iterations.
+## Gradient range [-0.0003467788,0.0005154578]
+## (score 736.9402 &amp; scale 2.252304).
+## Hessian positive definite, eigenvalue range [0.000346021,198.5041].
+## Model rank =  7 / 7 
+## 
+## Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+## indicate that k is too low, especially if edf is close to k'.
+## 
+##         k'  edf k-index p-value    
+## s(x1) 3.00 1.00    0.13  &lt;2e-16 ***
+## s(x2) 3.00 2.91    1.04    0.83    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+---
+background-image: url(figures/rookie.jpg)
+background-size: contain
+---
+
+# Checking basis size
+
+Increasing basis size can move issues to another part of the model.
+
+
+```r
+norm_model_2 &lt;- gam(y_norm ~ s(x1, k = 12) + s(x2, k = 4), method = 'REML')
+gam.check(norm_model_2)
+```
+
+```
+## 
+## Method: REML   Optimizer: outer newton
+## full convergence after 11 iterations.
+## Gradient range [-5.658609e-06,5.392657e-06]
+## (score 345.3111 &amp; scale 0.2706205).
+## Hessian positive definite, eigenvalue range [0.967727,198.6299].
+## Model rank =  15 / 15 
+## 
+## Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+## indicate that k is too low, especially if edf is close to k'.
+## 
+##          k'   edf k-index p-value   
+## s(x1) 11.00 10.84    0.99    0.38   
+## s(x2)  3.00  2.98    0.86    0.01 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+---
+
+# Checking basis size
+
+Successively check issues in all smooths.
+
+
+```r
+norm_model_3 &lt;- gam(y_norm ~ s(x1, k = 12) + s(x2, k = 12),method = 'REML')
+gam.check(norm_model_3)
+```
+
+```
+## 
+## Method: REML   Optimizer: outer newton
+## full convergence after 8 iterations.
+## Gradient range [-1.136198e-08,6.883383e-13]
+## (score 334.2084 &amp; scale 0.2485446).
+## Hessian positive definite, eigenvalue range [2.812271,198.6868].
+## Model rank =  23 / 23 
+## 
+## Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+## indicate that k is too low, especially if edf is close to k'.
+## 
+##          k'   edf k-index p-value
+## s(x1) 11.00 10.85    0.98    0.31
+## s(x2) 11.00  7.95    0.95    0.15
+```
+
+---
+
+# Checking basis size
+
+![](03-model-checking-and-selection_files/figure-html/gam_check_norm4-1.svg)&lt;!-- --&gt;
+
+---
+class: inverse center middle subsection
+
+# `concurvity()`: how independent are mmy variables
+
+---
+
+# What is concurvity?
+
+- Nonlinear measure of variable relationships, similar to co-linearity
+
+- Generally a property of a _model_, not data alone
+
+- In linear models, we may be concerned about co-linear variables, which we can find with `cor(data)`, or `pairs(data)` of the data
+
+- When using GAMs, we use `concurvity(model)`
+
+
+
+???
+
+Concurvity must be a model property because it depends on the type of curves allowed
+
+---
+
+# Effects of concurvity
+
+Independent variables yield nice, separable nonlinear GAM terms
+
+![](03-model-checking-and-selection_files/figure-html/concurve1-1.svg)&lt;!-- --&gt;
+
+---
+
+# Effects of concurvity
+
+Modest dependence between predictor variables increases uncertainty.
+
+![](03-model-checking-and-selection_files/figure-html/concurve2-1.svg)&lt;!-- --&gt;
+
+---
+
+# Effects of concurvity
+
+Smooth forms and intervals go &lt;span style="color:purple;"&gt;**buck wild**&lt;/span&gt; under strong dependence. 
+
+![](03-model-checking-and-selection_files/figure-html/concurve4-1.svg)&lt;!-- --&gt;
+
+---
+
+# Use `concurvity()` to diagnose
+
+(It's easier to read with `round()`)
+
+
+
+.pull-left[
+
+```r
+round(concurvity(some_model), 2)
+```
+
+```
+##          para s(x1_cc) s(x2_cc)
+## worst       0     0.84     0.84
+## observed    0     0.22     0.57
+## estimate    0     0.28     0.60
+```
+
+- `full=TRUE` how much each smooth is explained by _all_ others
+- `full=FALSE` how much each smooth is explained by _each_ other 
+- 3 estimates provided
+]
+
+.pull-right[
+
+```r
+lapply(
+  concurvity(some_model, full= FALSE),
+  round, 2)
+```
+
+```
+## $worst
+##          para s(x1_cc) s(x2_cc)
+## para        1     0.00     0.00
+## s(x1_cc)    0     1.00     0.84
+## s(x2_cc)    0     0.84     1.00
+## 
+## $observed
+##          para s(x1_cc) s(x2_cc)
+## para        1     0.00     0.00
+## s(x1_cc)    0     1.00     0.57
+## s(x2_cc)    0     0.22     1.00
+## 
+## $estimate
+##          para s(x1_cc) s(x2_cc)
+## para        1     0.00      0.0
+## s(x1_cc)    0     1.00      0.6
+## s(x2_cc)    0     0.28      1.0
+```
+]
+
+---
+
+# Concurvity: Remember
+
+- Can make your model unstable to small changes
+
+- `cor(data)` not sufficient: use the `concurvity(model)` function
+
+- Not always obvious from plots of smooths!!
+
+---
+class: inverse center middle subsection
+
+# To the Console!
+
+---
+class: inverse center middle subsection
+
+# Model selection
+
+---
+
+# Model selection
+
+Model (or variable) selection &amp;mdash; an important area of theoretical and applied interest
+
+- In statistics we aim for a balance between *fit* and *parsimony*
+
+- In applied research we seek the set of covariates with strongest effects on `\(y\)`
+
+We seek a subset of covariates that improves *interpretability* and *prediction accuracy*
+
+Other models and software do this via: boosting, ridge/lasso penalization, stepwise variable, etc. Sometimes called _regularization_.
+
+---
+
+# The **mgcv** way: additional spline penalties
+
+Smoothing parameter estimation allows selection of a wide range of potentially complex functions for smooths.
+
+But, cannot remove a term entirely from the model because the penalties used act only on the *range space* of a spline basis. The *null space* of the basis is unpenalised.
+
+- **Null space** &amp;mdash; the basis functions that are linear
+
+- **Range space** &amp;mdash; the basis functions that are wiggly
+
+Range space penalization shrinks *wiggliness*, null space penalization shrinks *slope*.
+
+---
+
+
+# Null Space and Range Space
+
+![](figures/nullrange.jpg)
+
+---
+
+# Additional penalties
+
+**mgcv** has two ways to penalize the null space, i.e. to do selection
+
+- *double penalty approach* on all model smooths via `select = TRUE`
+
+- *shrinkage approach* via special bases for specfied smooths
+    
+	- thin plate spline (default, `s(..., bs = 'ts')`),
+    
+	- cubic splines  (`s(..., bs = 'cs')`)
+
+**double penalty** tends to works best, but doubles the number of smoothness parameters to estimate
+
+---
+
+# Applying selection via penalization
+
+
+
+.pull-left[
+Really, all you need is `select = TRUE`!
+
+```r
+b &lt;- gam(y ~ s(x0) + s(x1) + s(x2) +
+             s(x3) + s(x4) + s(x5),
+  data = dat,
+  family=poisson,
+  select = TRUE,
+  method = "REML"
+  )
+summary(b)
+```
+]
+
+.pull-right[
+```
+## Family: poisson 
+## Link function: log 
+## 
+## Formula:
+## y ~ s(x0) + s(x1) + s(x2) + s(x3) + s(x4) + s(x5)
+## 
+## Parametric coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  1.21758    0.04082   29.83   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Approximate significance of smooth terms:
+##             edf Ref.df  Chi.sq p-value    
+## s(x0) 1.7655088      9   5.264  0.0397 *  
+## s(x1) 1.9271040      9  65.356  &lt;2e-16 ***
+## s(x2) 6.1351414      9 156.204  &lt;2e-16 ***
+## s(x3) 0.0002849      9   0.000  0.4068 &lt;&lt;&lt;
+## s(x4) 0.0003044      9   0.000  1.0000 &lt;&lt;&lt;   
+## s(x5) 0.1756926      9   0.195  0.2963 &lt;&lt;&lt;   
+```
+]
+
+---
+
+# Applying selection via penalization
+
+![](03-model-checking-and-selection_files/figure-html/plot-penal-model-1.svg)&lt;!-- --&gt;
+
+
+---
+class: inverse center middle subsection
+
+# A Final Exercise!
+---
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
