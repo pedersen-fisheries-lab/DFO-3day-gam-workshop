@@ -5,7 +5,7 @@ trawl_data <- read.csv("data/trawl_nl.csv")
 trawl_data_2010 <- trawl_data[trawl_data$year == 2010, ]
 
 shrimp <- gam(
-  shrimp ~ offset(log(area_trawled)) + s(depth) + s(temp_bottom),
+  shrimp ~ s(depth) + s(temp_bottom),
   data = trawl_data_2010,
   family = gaussian,
   method = "REML")
@@ -26,7 +26,7 @@ hist(trawl_data_2010$shrimp)
 hist(log(trawl_data_2010$shrimp))
 
 shrimp_log <- gam(
-  shrimp ~ offset(log(area_trawled)) + s(depth) + s(temp_bottom),
+  shrimp ~ s(depth) + s(temp_bottom),
   data = trawl_data_2010,
   family = gaussian(link = "log"),
   method = "REML")
@@ -40,7 +40,7 @@ gam.check(shrimp_log)
 par(mfrow = c(1,1))
 
 shrimp_tw <- gam(
-  shrimp ~ offset(log(area_trawled)) + s(depth) + s(temp_bottom),
+  shrimp ~ s(depth) + s(temp_bottom),
   data = trawl_data_2010,
   family = tw,
   method = "REML")
@@ -53,7 +53,7 @@ gam.check(shrimp_tw)
 par(mfrow = c(1,1))
 
 shrimp_tw2 <- gam(
-  shrimp ~ offset(log(area_trawled)) + s(depth, k = 20) + s(temp_bottom, k = 20),
+  shrimp ~ s(depth, k = 20) + s(temp_bottom, k = 20),
   data = trawl_data_2010,
   family = tw,
   method = "REML")
@@ -66,7 +66,7 @@ gam.check(shrimp_tw2)
 par(mfrow = c(1,1))
 
 shrimp_tw_te <- gam(
-  shrimp ~ offset(log(area_trawled)) + te(depth, temp_bottom),
+  shrimp ~ te(depth, temp_bottom),
   data = trawl_data_2010,
   family = tw,
   method = "REML")
@@ -102,7 +102,7 @@ trawl_data_extra$var1 <- rnorm(nrow(trawl_data_extra))
 
 
 shrimp_tw_all <- gam(
-  shrimp ~ offset(log(area_trawled)) + s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
+  shrimp ~ s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
   data = trawl_data_extra,
   family = tw,
   method = "REML")
@@ -111,7 +111,7 @@ summary(shrimp_tw_all)
 plot(shrimp_tw_all, pages = 1, residuals = TRUE, cex=0.5, pch=21, scheme = 2, scale = 0)
 
 shrimp_tw_sel <- gam(
-  shrimp ~  offset(log(area_trawled)) + s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
+  shrimp ~ s(depth) + s(x) + s(y) + s(temp_bottom) + s(stratum) + s(var1),
   data = trawl_data_extra,
   family = tw,
   method = "REML",

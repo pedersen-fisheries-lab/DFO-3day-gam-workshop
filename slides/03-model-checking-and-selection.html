@@ -55,7 +55,6 @@ shrimp &lt;- read.csv(here("data/trawl_nl.csv"))
 shrimp2010 &lt;- subset(shrimp, year==2010)
 b_shrimp &lt;- 
   gam(shrimp ~ 
-        offset(log(area_trawled))
         + s(x, y),
       data=shrimp2010,
       family=quasipoisson,
