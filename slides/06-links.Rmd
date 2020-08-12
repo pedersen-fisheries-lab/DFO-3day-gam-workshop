@@ -225,7 +225,7 @@ Different `family` options are available (no Tweedie for example) but option to 
 
 # *brms* version of species richness model
 
-```{r brms-richness-model, eval = FALSE
+```{r brms-richness-model, eval = FALSE}
 brm(bf(richness ~ s(year)),
     data = shrimp, family = poisson(),
     chains = 4, control = list(adapt_delta = 0.95))

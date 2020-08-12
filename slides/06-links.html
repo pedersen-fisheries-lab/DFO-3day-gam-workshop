@@ -5,7 +5,6 @@
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller" />
     <meta name="date" content="2020-08-14" />
-    <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
@@ -150,7 +149,7 @@ class: inverse middle center big-subsection
 Lots of software just want design and covariance matrices:
 
 - JAGS
-- `brms`
+- *brms*
 - TMB
 - Stan
 - Nimble
@@ -187,8 +186,30 @@ Lots of software just want design and covariance matrices:
 
 ---
 
-# `brms`
+# *brms*
 
+*brms* is an R package for fitting Bayesian generalized (non-)linear multivariate multilevel models using 'Stan' for full Bayesian inference
+
+It is largely the work of Paul-Christian Bürkner
+
+*brms* can fit penalized smooth terms using `s()` and `t2()` all the basis types available in *mgcv*
+
+Uses the same mixed model representation of smooths as is used in *gamm4*, which is why you can't use `te()` and `ti()`
+
+Different `family` options are available (no Tweedie for example) but option to create custom family functions
+
+---
+
+# *brms* version of species richness model
+
+
+```r
+brm(bf(richness ~ s(year)),
+    data = shrimp, family = poisson(),
+    chains = 4, control = list(adapt_delta = 0.95))
+```
+
+This would use the default priors for random effect standard deviations (half student t priors with 3 degrees of freedom and an appropriate scale parameter)
 
 ---
 
