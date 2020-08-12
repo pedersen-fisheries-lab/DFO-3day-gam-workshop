@@ -55,8 +55,7 @@ m_rich &lt;- gam(richness ~ s(year),
 
 
 ```r
-m_spt &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                 te(x, y, year, d = c(2,1), bs = c('tp', 'cr'), k = c(20, 5)),
+m_spt &lt;- gam(shrimp ~ te(x, y, year, d = c(2,1), bs = c('tp', 'cr'), k = c(20, 5)),
              data = shrimp,
              family = tw,
              method = "REML")
@@ -261,26 +260,26 @@ This idea is very general;  spatiotemporal model needs a grid of x,y coordinates
 
 ```r
 sp_new &lt;- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
-                                   year = unique(year), area_trawled = median(area_trawled)))
+                                   year = unique(year)))
 sp_pred &lt;- predict(m_spt, newdata = sp_new, se.fit = TRUE) # link scale is default
 sp_pred &lt;- bind_cols(as_tibble(sp_new), as_tibble(as.data.frame(sp_pred)))
 sp_pred
 ```
 
 ```
-## # A tibble: 100,000 x 6
-##          x        y  year area_trawled   fit se.fit
-##      &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt;        &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
-##  1 428238. 5078244.  2005        0.250  3.47  1.06 
-##  2 436886. 5078244.  2005        0.250  3.45  1.06 
-##  3 445535. 5078244.  2005        0.250  3.43  1.05 
-##  4 454183. 5078244.  2005        0.250  3.41  1.04 
-##  5 462831. 5078244.  2005        0.250  3.38  1.03 
-##  6 471479. 5078244.  2005        0.250  3.36  1.02 
-##  7 480127. 5078244.  2005        0.250  3.33  1.01 
-##  8 488775. 5078244.  2005        0.250  3.30  1.00 
-##  9 497423. 5078244.  2005        0.250  3.26  0.994
-## 10 506071. 5078244.  2005        0.250  3.23  0.985
+## # A tibble: 100,000 x 5
+##          x        y  year   fit se.fit
+##      &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt;
+##  1 428238. 5078244.  2005  3.34  1.06 
+##  2 436886. 5078244.  2005  3.32  1.06 
+##  3 445535. 5078244.  2005  3.31  1.05 
+##  4 454183. 5078244.  2005  3.29  1.04 
+##  5 462831. 5078244.  2005  3.26  1.03 
+##  6 471479. 5078244.  2005  3.24  1.02 
+##  7 480127. 5078244.  2005  3.21  1.01 
+##  8 488775. 5078244.  2005  3.18  1.00 
+##  9 497423. 5078244.  2005  3.15  0.994
+## 10 506071. 5078244.  2005  3.12  0.985
 ## # … with 99,990 more rows
 ```
 
@@ -299,19 +298,19 @@ sp_pred
 ```
 
 ```
-## # A tibble: 100,000 x 7
-##          x        y  year area_trawled   fit se.fit biomass
-##      &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt;        &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
-##  1 428238. 5078244.  2005        0.250  3.47  1.06       NA
-##  2 436886. 5078244.  2005        0.250  3.45  1.06       NA
-##  3 445535. 5078244.  2005        0.250  3.43  1.05       NA
-##  4 454183. 5078244.  2005        0.250  3.41  1.04       NA
-##  5 462831. 5078244.  2005        0.250  3.38  1.03       NA
-##  6 471479. 5078244.  2005        0.250  3.36  1.02       NA
-##  7 480127. 5078244.  2005        0.250  3.33  1.01       NA
-##  8 488775. 5078244.  2005        0.250  3.30  1.00       NA
-##  9 497423. 5078244.  2005        0.250  3.26  0.994      NA
-## 10 506071. 5078244.  2005        0.250  3.23  0.985      NA
+## # A tibble: 100,000 x 6
+##          x        y  year   fit se.fit biomass
+##      &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+##  1 428238. 5078244.  2005  3.34  1.06       NA
+##  2 436886. 5078244.  2005  3.32  1.06       NA
+##  3 445535. 5078244.  2005  3.31  1.05       NA
+##  4 454183. 5078244.  2005  3.29  1.04       NA
+##  5 462831. 5078244.  2005  3.26  1.03       NA
+##  6 471479. 5078244.  2005  3.24  1.02       NA
+##  7 480127. 5078244.  2005  3.21  1.01       NA
+##  8 488775. 5078244.  2005  3.18  1.00       NA
+##  9 497423. 5078244.  2005  3.15  0.994      NA
+## 10 506071. 5078244.  2005  3.12  0.985      NA
 ## # … with 99,990 more rows
 ```
 
@@ -345,13 +344,13 @@ m_spt
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + te(x, y, year, d = c(2, 
-##     1), bs = c("tp", "cr"), k = c(20, 5))
+## shrimp ~ te(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 
+##     5))
 ## 
 ## Estimated degrees of freedom:
-## 70.5  total = 71.51 
+## 70.4  total = 71.38 
 ## 
-## REML score: 19098.98
+## REML score: 19102.91
 ```
 ]
 
@@ -365,8 +364,7 @@ One way is to  decompose the spatio-temporal function in main effects plus inter
 
 
 ```r
-m_ti &lt;- gam(shrimp ~ offset(log(area_trawled)) +
-                ti(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 5)) +
+m_ti &lt;- gam(shrimp ~ ti(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 5)) +
                 s(x, y, bs = "tp", k = 20) +
                 s(year, bs = "cr", k = 5),
             data = shrimp, family = tw, method = "REML")
@@ -397,26 +395,25 @@ summary(m_ti)
 ## Link function: log 
 ## 
 ## Formula:
-## shrimp ~ offset(log(area_trawled)) + ti(x, y, year, d = c(2, 
-##     1), bs = c("tp", "cr"), k = c(20, 5)) + s(x, y, bs = "tp", 
-##     k = 20) + s(year, bs = "cr", k = 5)
+## shrimp ~ ti(x, y, year, d = c(2, 1), bs = c("tp", "cr"), k = c(20, 
+##     5)) + s(x, y, bs = "tp", k = 20) + s(year, bs = "cr", k = 5)
 ## 
 ## Parametric coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  5.29838    0.03127   169.4   &lt;2e-16 ***
+## (Intercept)  3.89948    0.03129   124.6   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Approximate significance of smooth terms:
-##                edf Ref.df       F p-value    
-## ti(x,y,year) 48.53 59.712   7.819  &lt;2e-16 ***
-## s(x,y)       18.89 18.997 181.006  &lt;2e-16 ***
-## s(year)       3.87  3.979 103.963  &lt;2e-16 ***
+##                 edf Ref.df       F p-value    
+## ti(x,y,year) 48.139 59.401   7.824  &lt;2e-16 ***
+## s(x,y)       18.885 18.997 179.974  &lt;2e-16 ***
+## s(year)       3.873  3.979 110.646  &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## R-sq.(adj) =  0.126   Deviance explained = 45.1%
-## -REML =  19083  Scale est. = 9.3754    n = 4152
+## R-sq.(adj) =   0.13   Deviance explained = 45.1%
+## -REML =  19087  Scale est. = 9.3859    n = 4152
 ```
 ]
 ]
@@ -430,8 +427,7 @@ Prediction data only need dummy values for `x` and `y`
 
 
 ```r
-ti_new &lt;- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100),
-                                   area_trawled = median(area_trawled)))
+ti_new &lt;- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100)))
 
 *ti_pred &lt;- predict(m_ti, newdata = ti_new, se.fit = TRUE, exclude = c("ti(x,y,year)", "s(x,y)"))
 
@@ -770,7 +766,7 @@ But what if you also wanted the uncertainty in that estimate?
 
 ```r
 sp_new &lt;- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
-                                   year = 2007, area_trawled = median(area_trawled)))
+                                   year = 2007))
 Xp &lt;- predict(m_spt, newdata = sp_new, type = "lpmatrix")
 
 ## work out now which points are too far now
@@ -802,7 +798,7 @@ mean(total_biomass)
 ```
 
 ```
-## [1] 6206271
+## [1] 1564741
 ```
 
 ```r
@@ -811,7 +807,7 @@ quantile(total_biomass, probs = c(0.025, 0.975))
 
 ```
 ##    2.5%   97.5% 
-## 5517164 6941481
+## 1394264 1757706
 ```
 
 ---
@@ -840,7 +836,7 @@ with(bio_post, mean(total))
 ```
 
 ```
-## [1] 6191085
+## [1] 1561014
 ```
 
 ```r
@@ -849,7 +845,7 @@ with(bio_post, quantile(total, probs = c(0.025, 0.975)))
 
 ```
 ##    2.5%   97.5% 
-## 5565991 6959532
+## 1403512 1753195
 ```
 ]
 
