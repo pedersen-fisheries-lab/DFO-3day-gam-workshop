@@ -4,8 +4,9 @@
     <title>What are GAMs?</title>
     <meta charset="utf-8" />
     <meta name="author" content="Eric Pedersen (with material heavily borrowed from David Miller)" />
+    <script src="libs/header-attrs-2.3/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https:\\stackpath.bootstrapcdn.com\bootstrap\4.3.1\css\bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
   </head>
   <body>
@@ -41,7 +42,7 @@ Models that look like:
 
 `\(y_i \sim Some\ distribution(\mu_i, \sigma_i)\)`
 
-`\(link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots\)`
+`\(link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_2\cdot x_{2i} + \ldots\)`
 
 ---
 
@@ -91,7 +92,7 @@ Models that look like:
 
 `\(y_i = Poisson(\mu_i)\)`
 
-`\(\mu_i = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots\)`
+`\(\text{ln}(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots\)`
 
 ![](01-1D-smoothing_files/figure-html/poisplot-1.png)&lt;!-- --&gt;
 
@@ -317,7 +318,7 @@ You've probably seen random effects written like:
 
 --
 
-* The basis functions are the different levels of the discrete variable: `\(f_j(x_i)=1\)` if `\(x_i\)` is in group `\(j\)`, `\(f_j(x_i)=1\)` if not
+* The basis functions are the different levels of the discrete variable: `\(f_j(x_i)=1\)` if `\(x_i\)` is in group `\(j\)`, `\(f_j(x_i)=0\)` if not
 
 --
 
@@ -365,7 +366,10 @@ You've probably seen random effects written like:
 
 --
 
-# But enough lecture; on to the live coding!
+# But enough lecture; on to the live coding! 
+
+
+
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
