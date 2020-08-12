@@ -61,7 +61,7 @@ Models that look like:
 
 $y_i \sim Some\ distribution(\mu_i, \sigma_i)$
 
-$link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots$
+$link(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_2\cdot x_{2i} + \ldots$
 
 ---
 
@@ -129,7 +129,7 @@ print(p)
 
 $y_i = Poisson(\mu_i)$
 
-$\mu_i = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots$
+$\text{ln}(\mu_i) = Intercept + \beta_1\cdot x_{1i} + \beta_1\cdot x_{2i} + \ldots$
 
 ```{r poisplot, fig.width=12, fig.height=6}
 set.seed(2) ## simulate some data...
@@ -588,7 +588,7 @@ $y_{i,j} =\alpha + \beta_j + \epsilon_i$, $\beta_i \sim Normal(0, \sigma_{\beta}
 
 --
 
-* The basis functions are the different levels of the discrete variable: $f_j(x_i)=1$ if $x_i$ is in group $j$, $f_j(x_i)=1$ if not
+* The basis functions are the different levels of the discrete variable: $f_j(x_i)=1$ if $x_i$ is in group $j$, $f_j(x_i)=0$ if not
 
 --
 
