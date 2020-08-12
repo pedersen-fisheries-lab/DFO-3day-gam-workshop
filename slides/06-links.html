@@ -206,10 +206,28 @@ Different `family` options are available (no Tweedie for example) but option to 
 ```r
 brm(bf(richness ~ s(year)),
     data = shrimp, family = poisson(),
-    chains = 4, control = list(adapt_delta = 0.95))
+    iter = 4000, warmup = 1000, chains = 4)
 ```
 
-This would use the default priors for random effect standard deviations (half student t priors with 3 degrees of freedom and an appropriate scale parameter)
+* smooths are random effectsso uses default priors for random effect standard deviations
+    * half Student *t* priors with 3 degrees of freedom and an appropriate scale parameter
+* 4 chains
+    * 4000 total samples per chain
+	* first 1000 samples used as burn in &amp; to tune the sampler
+
+---
+
+# *brms* version of the space-time model
+
+There isn't a good family for this in *brms*; one option might be a hurdle gamma if we observed 0 shrimp biomass in some trawls
+
+
+```r
+brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
+       hu ~ t2(x, y, year), d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
+    data = shrimp, family = hurdle_gamma(),
+    iter = 4000, warmup = 1000, chains = 4)
+```
 
 ---
 
@@ -217,6 +235,34 @@ This would use the default priors for random effect standard deviations (half st
 
 - better graphics for GAMs: `gratia`, `mgcViz`
 - very new: `mgcvUtils`
+
+---
+
+# *gratia*
+
+*gratia's* main reason for existing is that I (Gavin) wanted to make it easier to work with *mgcv* models using *ggplot2* and the other *tidyverse* packages
+
+*gratia* provides
+
+* *ggplot2* implementation of `plot.gam()`: `draw.gam()`
+* *ggplot2* implementation of `gam.check()`'s plots: `appraise()`
+* derivatives of smooths (for estimating rates of change)
+* simultaneous intervals for smooths (whole-function coverage)
+* utilities for working with *mgcv* fits extracting info from them into tidy objects
+
+&lt;https://gavinsimpson.github.io/gratia/&gt;
+
+---
+
+# *gratia* &amp;mdash; `draw()`
+
+![](06-links_files/figure-html/gratia-draw-1.svg)&lt;!-- --&gt;
+
+---
+
+# *gratia* &amp;mdash; `appraise()`
+
+![](06-links_files/figure-html/gratia-appraise-1.svg)&lt;!-- --&gt;
 
 ---
 
