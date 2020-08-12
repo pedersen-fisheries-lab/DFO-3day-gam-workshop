@@ -25,7 +25,8 @@ A short course on how to fit, plot, and evaluate GAMs
     line of code your R console:
 
     ``` {.r}
-    install.packages(c("dplyr", "rnaturalearth", "sf", "lwgeom", "dsm", "ggplot2", "gratia", "mgcv", "tidyr"))
+    install.packages(c("dplyr", "rnaturalearth", "sf", "lwgeom", "dsm", "ggplot2", "remotes", "mgcv", "tidyr"))
+    remotes::install_github("gavinsimpson/gratia")
     ```
 
 ### Online environment
