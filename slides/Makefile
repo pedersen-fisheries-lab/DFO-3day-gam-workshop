@@ -3,5 +3,5 @@ HTMLFILES=$(addsuffix .html,$(basename $(RMDFILES)))
 
 all: $(HTMLFILES)
 
-$(HTMLFILES): %.html: %.rmd
+$(HTMLFILES): %.html: %.Rmd
 	Rscript -e 'library("rmarkdown"); render("$<")'
