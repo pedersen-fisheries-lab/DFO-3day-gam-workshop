@@ -131,7 +131,6 @@ This is a 6-session workshop, developed with the goal of giving you enough GAM k
 
 # Other things we've collectively taught
 
-(Where we might look for example data, materials to reuse.)
 
 -   All:
 
