@@ -76,7 +76,8 @@ ggplot(pred, aes(x = year)) +
 
 
 ## ----spt-example-predict------------------------------------------------------
-sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
+sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100),
+                                   y = seq_min_max(y, n = 100),
                                    year = unique(year)))
 sp_pred <- predict(m_spt, newdata = sp_new, se.fit = TRUE) # link scale is default
 sp_pred <- bind_cols(as_tibble(sp_new), as_tibble(as.data.frame(sp_pred)))
@@ -94,22 +95,26 @@ sp_pred
 
 ## ----spt-example-plot, fig.height = 5.5---------------------------------------
 ggplot(sp_pred, aes(x = x, y = y, fill = biomass)) + geom_raster() +
-    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) + coord_equal()
+    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) +
+    coord_equal()
 
 ## ----plotting the uncertainty-------------------------------------------------
 ggplot(sp_pred, aes(x = x, y = y, fill = se.fit)) + geom_raster() +
-    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) + coord_equal()
+    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) +
+    coord_equal()
 
 ## ----plotting the confidence interval-----------------------------------------
 sp_pred <- sp_pred %>% mutate(lwr = ilink(fit - (2 * se.fit)),
                               upr = ilink(fit + (2 * se.fit)))
 
 ggplot(sp_pred, aes(x = x, y = y, fill = lwr)) + geom_raster() +
-    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) + coord_equal() +
+    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) +
+    coord_equal() +
     labs(title = "Lower 95% interval")
 
 ggplot(sp_pred, aes(x = x, y = y, fill = upr)) + geom_raster() +
-    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) + coord_equal() +
+    scale_fill_viridis_c(option = "plasma") + facet_wrap(~ year, ncol = 5) +
+    coord_equal() +
     labs(title = "Upper 95% interval")
 
 ## ----vis.gam------------------------------------------------------------------
@@ -138,7 +143,8 @@ summary(m_ti)
 
 
 ## ----pred-data-ti-model-------------------------------------------------------
-ti_new <- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100)))
+ti_new <- with(shrimp, expand.grid(x = mean(x), y = mean(y),
+                                   year = seq_min_max(year, n = 100)))
 
 ti_pred <- predict(m_ti, newdata = ti_new, se.fit = TRUE,
                    exclude = c("ti(x,y,year)", "s(x,y)")) #<<
@@ -154,8 +160,10 @@ predict(m_ti, newdata = ti_new, se.fit = TRUE, terms = "s(year)")
 
 
 ## ----plot-ti-marginal-trend, fig.height = 5-----------------------------------
-ggplot(ti_pred, aes(x = year)) + geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
-    geom_line(aes(y = biomass)) + labs(y = "Biomass", x = NULL)
+ggplot(ti_pred, aes(x = year)) +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
+    geom_line(aes(y = biomass)) +
+    labs(y = "Biomass", x = NULL)
 
 
 ## ----plot-conf-band-plus-posterior-smooths, fig.height = 5, echo = FALSE------
@@ -232,11 +240,13 @@ ggplot(tibble(richness = mu_p[587, ]), aes(x = richness)) +
 ## ----richness-fitted-samples, fig.height = 4.5--------------------------------
 rich_post <- fitted_samples(m_rich, n = 1000, newdata = shrimp, seed = 42)
 ggplot(filter(rich_post, row == 587), aes(x = fitted)) +
-    geom_histogram() + labs(title = "Posterior richness for obs #587", x = "Richness")
+    geom_histogram() +
+    labs(title = "Posterior richness for obs #587", x = "Richness")
 
 
 ## ----total-biomass-posterior-1------------------------------------------------
-sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100), y = seq_min_max(y, n = 100),
+sp_new <- with(shrimp, expand.grid(x = seq_min_max(x, n = 100),
+                                   y = seq_min_max(y, n = 100),
                                    year = 2007))
 Xp <- predict(m_spt, newdata = sp_new, type = "lpmatrix")
 
