@@ -537,6 +537,13 @@ set.seed(3)
 n <- 200
 dat <- gamSim(1, n=n, scale=.15, dist="poisson")                ## simulate data
 dat <- transform(dat, x4 = runif(n, 0, 1), x5 = runif(n, 0, 1)) ## spurious
+b <- gam(y ~ s(x0) + s(x1) + s(x2) +
+             s(x3) + s(x4) + s(x5),
+  data = dat,
+  family=poisson,
+  select = TRUE,
+  method = "REML"
+  )
 ```
 
 .pull-left[
