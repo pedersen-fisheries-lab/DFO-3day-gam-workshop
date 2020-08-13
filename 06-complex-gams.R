@@ -1,8 +1,11 @@
 
-#5. more complex models
-#  - other smoothers (each needs an example)
-#    - random effects
-# add a stratum random effect?
+#6. more complex models
+
+# part 1: Choosing a family to fit your data ####
+
+# part 2: Choosing a smooth to model a relationship
+
+
 dat_2010$strata <- as.factor(dat_2010$strata)
 mod_space_depth_select <- gam(cod ~ te(long, lat, k=15)+
                                 s(depth, k=20) +
