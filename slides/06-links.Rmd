@@ -255,6 +255,7 @@ brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
 # Utility packages
 
 - better graphics for GAMs: `gratia`, `mgcViz`
+- extrapolation tool for SDMs: `dsmextra`
 - very new: `mgcvUtils`
 
 ---
@@ -293,6 +294,20 @@ draw(m1, residuals = TRUE)
 ```{r gratia-appraise, echo = FALSE}
 appraise(m1, point_col = "steelblue", point_alpha = 0.4, method = "simulate")
 ```
+
+---
+
+# Extrapolation
+
+- Statisticians: don't do it!
+- Managers: give me results!
+- Variance issues?
+- Space-time interchangability/transferability?
+- `dsmextra` package by Phil Bouchet
+  - [https://densitymodelling.github.io/dsmextra/index.html](https://densitymodelling.github.io/dsmextra/index.html)
+  - paper accepted at Methods in Ecology and Evolution
+
+![dsm extra logo](figures/dsmextra-hex.png)
 
 ---
 

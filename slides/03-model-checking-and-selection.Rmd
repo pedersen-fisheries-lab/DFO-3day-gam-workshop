@@ -335,9 +335,9 @@ gam.check(norm_model_3)
 # Checking basis size
 
 ```{r gam_check_norm4, echo = FALSE}
-p1 <- draw(norm_model_1)
-p2 <- draw(norm_model_2)
-p3 <- draw(norm_model_3)
+p1 <- draw(norm_model_1, residual = TRUE)
+p2 <- draw(norm_model_2, residual = TRUE)
+p3 <- draw(norm_model_3, residual = TRUE)
 
 plot_grid(p1, p2, p3, nrow = 3, align = 'hv', axis = 'lrtb')
 ```
@@ -345,7 +345,7 @@ plot_grid(p1, p2, p3, nrow = 3, align = 'hv', axis = 'lrtb')
 ---
 class: inverse center middle subsection
 
-# `concurvity()`: how independent are mmy variables
+# `concurvity()`: how independent are my variables?
 
 ---
 
@@ -353,7 +353,7 @@ class: inverse center middle subsection
 
 - Nonlinear measure of variable relationships, similar to co-linearity
 
-- Generally a property of a _model_, not data alone
+- Generally a property of a _model_ and data, not data alone
 
 - In linear models, we may be concerned about co-linear variables, which we can find with `cor(data)`, or `pairs(data)` of the data
 

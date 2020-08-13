@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller" />
     <meta name="date" content="2020-08-14" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
@@ -234,6 +235,7 @@ brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
 # Utility packages
 
 - better graphics for GAMs: `gratia`, `mgcViz`
+- extrapolation tool for SDMs: `dsmextra`
 - very new: `mgcvUtils`
 
 ---
@@ -263,6 +265,20 @@ brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
 # *gratia* &amp;mdash; `appraise()`
 
 ![](06-links_files/figure-html/gratia-appraise-1.svg)&lt;!-- --&gt;
+
+---
+
+# Extrapolation
+
+- Statisticians: don't do it!
+- Managers: give me results!
+- Variance issues?
+- Space-time interchangability/transferability?
+- `dsmextra` package by Phil Bouchet
+  - [https://densitymodelling.github.io/dsmextra/index.html](https://densitymodelling.github.io/dsmextra/index.html)
+  - paper accepted at Methods in Ecology and Evolution
+
+![dsm extra logo](figures/dsmextra-hex.png)
 
 ---
 
