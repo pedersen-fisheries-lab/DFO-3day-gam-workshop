@@ -335,9 +335,9 @@ gam.check(norm_model_3)
 # Checking basis size
 
 ```{r gam_check_norm4, echo = FALSE}
-p1 <- draw(norm_model_1)
-p2 <- draw(norm_model_2)
-p3 <- draw(norm_model_3)
+p1 <- draw(norm_model_1, residual = TRUE)
+p2 <- draw(norm_model_2, residual = TRUE)
+p3 <- draw(norm_model_3, residual = TRUE)
 
 plot_grid(p1, p2, p3, nrow = 3, align = 'hv', axis = 'lrtb')
 ```
