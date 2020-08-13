@@ -433,7 +433,11 @@
   <path d="M 751 205.96875 L 754 205.96875 L 754 355.929688 L 751 355.929688 Z M 751 205.96875 "/>
 </clipPath>
 </defs>
+<<<<<<< HEAD
 <g id="surface164">
+=======
+<g id="surface76">
+>>>>>>> Tweak model checking
 <rect x="0" y="0" width="792" height="396" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
 <g clip-path="url(#clip1)" clip-rule="nonzero">
 <path style="fill:none;stroke-width:0.775984;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(92.156863%,92.156863%,92.156863%);stroke-opacity:1;stroke-miterlimit:10;" d="M 59.828125 136.179688 L 256.03125 136.179688 "/>

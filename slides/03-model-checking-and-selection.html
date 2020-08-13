@@ -5,7 +5,6 @@
     <meta charset="utf-8" />
     <meta name="author" content="Noam Ross" />
     <meta name="date" content="2020-08-13" />
-    <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
@@ -32,14 +31,15 @@ class: inverse middle center big-subsection
 
 ## Today:
 
--  Morning: Model Checking and Variable Selecton with Me
+-  Morning: Model Checking and Variable Selection with Me
 -  Afternoon: Prediction and Variation with Gavin
 
 ## Reminder
 
 -  Links seminar materials in the "Workshops Material" channel
--  Ask questions in the "General" Channel
+   - Re-download for latest tweaks and updates
 -  Software problems? Use the online RStudio instance: [bit.ly/gam-rstudio](https://bit.ly/gam-rstudio)
+-  Ask questions as we go, we'll answer in chat and at the end of sections
 
 ---
 
@@ -135,7 +135,7 @@ norm_model &lt;- gam(y_norm ~ s(x1, k=12) + s(x2, k=12), method = 'REML')
 gam.check(norm_model, rep = 500)
 ```
 
-![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-1.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-2.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-3.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-4.svg)&lt;!-- --&gt;
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots1-1.svg)&lt;!-- --&gt;
 
 ---
 
@@ -147,7 +147,7 @@ pois_model &lt;- gam(y_negbinom ~ s(x1, k=12) + s(x2, k=12), family=poisson, met
 gam.check(pois_model, rep = 500)
 ```
 
-![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-1.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-2.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-3.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-4.svg)&lt;!-- --&gt;
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots2-1.svg)&lt;!-- --&gt;
 
 ---
 
@@ -159,7 +159,7 @@ negbin_model &lt;- gam(y_negbinom ~ s(x1, k=12) + s(x2, k=12), family = nb, meth
 gam.check(negbin_model, rep = 500)
 ```
 
-![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-1.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-2.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-3.svg)&lt;!-- --&gt;![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-4.svg)&lt;!-- --&gt;
+![](03-model-checking-and-selection_files/figure-html/gam_check_plots3-1.svg)&lt;!-- --&gt;
 
 ---
 # A (sometimes) helpful addition: DHARMa
@@ -238,8 +238,7 @@ gam.check(norm_model_1)
 ## s(x1) 3.00 1.00    0.13  &lt;2e-16 ***
 ## s(x2) 3.00 2.91    1.04    0.83    
 ## ---
-## Signif. codes:  
-## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ---
@@ -273,8 +272,7 @@ gam.check(norm_model_2)
 ## s(x1) 11.00 10.84    0.99   0.375  
 ## s(x2)  3.00  2.98    0.86   0.015 *
 ## ---
-## Signif. codes:  
-## 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ---
@@ -293,7 +291,7 @@ gam.check(norm_model_3)
 ## 
 ## Method: REML   Optimizer: outer newton
 ## full convergence after 8 iterations.
-## Gradient range [-1.136198e-08,6.812328e-13]
+## Gradient range [-1.136198e-08,6.883383e-13]
 ## (score 334.2084 &amp; scale 0.2485446).
 ## Hessian positive definite, eigenvalue range [2.812271,198.6868].
 ## Model rank =  23 / 23 

@@ -1,6 +1,5 @@
 library(mgcv)
 
-# Load in data
 trawl_data <- read.csv("data/trawl_nl.csv")
 trawl_data_2010 <- trawl_data[trawl_data$year == 2010, ]
 

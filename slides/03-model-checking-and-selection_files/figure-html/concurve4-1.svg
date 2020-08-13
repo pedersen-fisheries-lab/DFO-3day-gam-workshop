@@ -88,7 +88,11 @@
 </symbol>
 </g>
 </defs>
+<<<<<<< HEAD
 <g id="surface264">
+=======
+<g id="surface131">
+>>>>>>> Tweak model checking
 <rect x="0" y="0" width="864" height="360" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
 <path style="fill:none;stroke-width:0.75;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 122.207031 284.949219 C 122.207031 287.324219 118.644531 287.324219 118.644531 284.949219 C 118.644531 282.574219 122.207031 282.574219 122.207031 284.949219 "/>
 <path style="fill:none;stroke-width:0.75;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 159.429688 299.808594 C 159.429688 302.183594 155.867188 302.183594 155.867188 299.808594 C 155.867188 297.433594 159.429688 297.433594 159.429688 299.808594 "/>

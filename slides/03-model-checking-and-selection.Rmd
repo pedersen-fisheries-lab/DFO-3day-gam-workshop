@@ -54,14 +54,15 @@ anim_res <- 200
 
 ## Today:
 
--  Morning: Model Checking and Variable Selecton with Me
+-  Morning: Model Checking and Variable Selection with Me
 -  Afternoon: Prediction and Variation with Gavin
 
 ## Reminder
 
 -  Links seminar materials in the "Workshops Material" channel
--  Ask questions in the "General" Channel
+   - Re-download for latest tweaks and updates
 -  Software problems? Use the online RStudio instance: [bit.ly/gam-rstudio](https://bit.ly/gam-rstudio)
+-  Ask questions as we go, we'll answer in chat and at the end of sections
 
 ---
 

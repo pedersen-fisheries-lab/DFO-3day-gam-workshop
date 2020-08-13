@@ -211,7 +211,11 @@
   <path d="M 69 59.039062 L 320 59.039062 L 320 114 L 69 114 Z M 69 59.039062 "/>
 </clipPath>
 </defs>
+<<<<<<< HEAD
 <g id="surface154">
+=======
+<g id="surface66">
+>>>>>>> Tweak model checking
 <rect x="0" y="0" width="360" height="360" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
 <path style="fill:none;stroke-width:0.75;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:0.878431;stroke-miterlimit:10;" d="M 72.429688 258.773438 C 72.429688 262.375 67.03125 262.375 67.03125 258.773438 C 67.03125 255.175781 72.429688 255.175781 72.429688 258.773438 "/>
 <path style="fill:none;stroke-width:0.75;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:0.878431;stroke-miterlimit:10;" d="M 91.609375 119.832031 C 91.609375 123.433594 86.210938 123.433594 86.210938 119.832031 C 86.210938 116.234375 91.609375 116.234375 91.609375 119.832031 "/>
