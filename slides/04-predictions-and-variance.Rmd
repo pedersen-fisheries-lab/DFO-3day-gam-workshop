@@ -45,6 +45,10 @@ anim_dev <- 'png'
 anim_res <- 200
 ```
 
+```{r xaringan-tile-view, echo=FALSE}
+xaringanExtra::use_tile_view()
+```
+
 # Recap &mdash; shrimp species richness
 
 .row[
@@ -326,7 +330,8 @@ Prediction data only need dummy values for `x` and `y`
 ```{r pred-data-ti-model}
 ti_new <- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100)))
 
-{{ti_pred <- predict(m_ti, newdata = ti_new, se.fit = TRUE, exclude = c("ti(x,y,year)", "s(x,y)"))}}
+ti_pred <- predict(m_ti, newdata = ti_new, se.fit = TRUE,
+                   exclude = c("ti(x,y,year)", "s(x,y)")) #<<
 
 ti_pred <- bind_cols(as_tibble(ti_new), as_tibble(as.data.frame(ti_pred))) %>%
     mutate(biomass = ilink(fit),

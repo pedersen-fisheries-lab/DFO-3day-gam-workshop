@@ -8,7 +8,8 @@ library('ggplot2')
 library('dplyr')
 
 # load the data
-shrimp <- read.csv(here("data", "trawl_nl.csv"))
+shrimp <- read.csv(here("data/trawl_nl.csv"))
+## shrimp <- read.csv("data/trawl_nl.csv")
 
 ## fit the species richness model
 m_rich <- gam(richness ~ s(year), data = shrimp,
@@ -16,9 +17,9 @@ m_rich <- gam(richness ~ s(year), data = shrimp,
 
 ## Exercise 1
 
-# Let's explore some of the plotting options for GAMs and how we can control what kidns of intervals are drawn
+# Let's explore some of the plotting options for GAMs and how we can control what kinds of intervals are drawn
 
-# 1. Using `plot()`, draw the estimated smooth
+# 1. Using `plot()`, draw the estimated smooth for model `m_rich`
 # 2. Draw the estimated smooth again, this time using `seWithMean = TRUE`. Does it change the plot much? Think why this is the case.
 # 3. Using `draw()`, draw the estimated smooth
 # 4. Repeat 3 but this time account for tune uncertainty due to estimating the smoothness parameters using `unconditional = TRUE`

@@ -6,6 +6,8 @@
     <meta name="author" content="Gavin L. Simpson" />
     <meta name="date" content="2020-08-13" />
     <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
   </head>
@@ -18,6 +20,8 @@ class: inverse, middle, left, my-title-slide, title-slide
 ### August 13, 2020
 
 ---
+
+
 
 
 
@@ -429,7 +433,8 @@ Prediction data only need dummy values for `x` and `y`
 ```r
 ti_new &lt;- with(shrimp, expand.grid(x = mean(x), y = mean(y), year = seq_min_max(year, n = 100)))
 
-*ti_pred &lt;- predict(m_ti, newdata = ti_new, se.fit = TRUE, exclude = c("ti(x,y,year)", "s(x,y)"))
+ti_pred &lt;- predict(m_ti, newdata = ti_new, se.fit = TRUE,
+*                  exclude = c("ti(x,y,year)", "s(x,y)"))
 
 ti_pred &lt;- bind_cols(as_tibble(ti_new), as_tibble(as.data.frame(ti_pred))) %&gt;%
     mutate(biomass = ilink(fit),
