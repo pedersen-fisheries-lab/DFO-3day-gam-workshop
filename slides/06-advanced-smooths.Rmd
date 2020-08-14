@@ -205,7 +205,6 @@ ggplot(trawl_map)+
 
 ```{r mrf-basis, include=TRUE, echo = FALSE,eval=TRUE, fig.width = 14,fig.height=8,message =FALSE, warning = FALSE}
 
-# load strata shapefile
 
 # load strata shapefile
 strata <- read_sf("../data/trawl_strata.shp",quiet = TRUE)%>%
@@ -217,10 +216,12 @@ strata_merge <- strata %>%
   st_buffer(dist = .01)%>%
   summarize()
 
-# for mgcv, we want a list of polygons (matrix of vertices)
+# for mgcv, we want a penalty matrix, taking into account neighbourhoods
 nl_strata_penalty <- strata %>%
-  st_buffer(dist = 0.01,quiet =TRUE)%>%
-  st_intersects(strata,sparse= FALSE) 
+  st_buffer(dist = 0.01)%>%
+  st_intersects(sparse= FALSE) 
+
+
 nl_strata_penalty <- -nl_strata_penalty
 diag(nl_strata_penalty) <- -(rowSums(nl_strata_penalty)- diag(nl_strata_penalty))
 
