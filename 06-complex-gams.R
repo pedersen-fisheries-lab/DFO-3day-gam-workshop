@@ -149,11 +149,11 @@ draw(mod_daphnia_interact)
 # For instance, let's say we want to know how shrimp abundance varies with
 # species richness:
 
-ggplot(trawl_data,aes(richness, shrimp+1)) +
+ggplot(trawls,aes(richness, shrimp+1)) +
   geom_point()+
   geom_smooth(method=lm)+scale_y_log10()
 
-mod_shrimp_rich1 <- gam(shrimp~ richness, family = tw, method = "REML", data= trawl_data)
+mod_shrimp_rich1 <- gam(shrimp~ richness, family = tw, method = "REML", data= trawls)
 summary(mod_shrimp_rich1)
 
 # But how does this relationship vary by year?
@@ -163,7 +163,7 @@ mod_shrimp_rich2 <- gam(shrimp~ s(year, by= richness)
                               + s(year),
                         family = tw,
                         method = "REML",
-                        data= trawl_data)
+                        data= trawls)
 
 summary(mod_shrimp_rich2)
 
@@ -175,7 +175,7 @@ mod_shrimp_rich3 <- gam(shrimp~ s(year, by= richness)
                         family = tw,
                         method = "REML",
                         select = TRUE,
-                        data= trawl_data)
+                        data= trawls)
 
 summary(mod_shrimp_rich3)
 
@@ -190,7 +190,8 @@ mendota_zooplankton <- zooplankton %>%
          year==1989) %>%
   mutate(taxon = factor(taxon))
 
-mod_zoo1 <- gam(density_adj ~ s(day, by = taxon,bs="cc"),
+mod_zoo1 <- gam(density_adj ~ s(day, by = taxon,bs="cc")+
+                              s(taxon, bs="re"),
                 family = Gamma(link = "log"),
                 method= "REML",
                 knots = list(day = c(0,365)),
@@ -227,4 +228,116 @@ library('tidyr')
 library('sf')
 
 
+# first we'll look at proportion data ####
 
+# Beta regression is specifically about models for continous fractions; if you
+# have counts of presence and absence, you should just use the binomial family
+
+# e.g. :
+
+shrimp_presence <- trawls%>%
+  filter(!is.na(shrimp),
+         !is.na(stratum),
+         stratum %in% trawl_strata$stratum)%>%
+  mutate(stratum = factor(stratum, levels =levels(trawl_strata$stratum)))%>%
+  group_by(stratum, year)%>%
+  summarize(n_trawls = n(),
+            n_present = sum(shrimp>0),
+            x = mean(x),
+            y = mean(y))
+
+mod_shrimp_presence <-  gam(cbind(n_present, n_trawls-n_present) ~ s(x,y,k=50),
+                            data = shrimp_presence,
+                            method = "REML",
+                            family =  binomial)
+
+draw(mod_shrimp_presence)
+
+# Beta regression is for actual continous fractions:
+
+mod_shrimp_relfrac <-  gam(shrimp/total ~ s(x,y,k=50),
+                            data = trawls,
+                            method = "REML",
+                            family =  betar)
+
+draw(mod_shrimp_relfrac)
+
+#Let's look at a second example:
+
+daphnia_dominance <- mendota_zooplankton%>%
+  group_by(day,year,year_f)%>%
+  summarize(daphnia = density_adj[taxon=="D. mendotae"][1],
+            total = sum(density_adj))%>%
+  mutate(daphnia_frac = daphnia/total)
+
+mod_daphnia_dom <- gam(daphnia_frac~ s(day, bs="cc", k=12),
+                       data= daphnia_dominance,
+                       family = betar,
+                       method="REML")
+
+draw(mod_daphnia_dom)
+
+# other useful families for different data types: scat: t-distribution, for
+# continous data with heavier tails than the normal distribution ziP:
+# zero-inflated Poisson, where there's some fixed probability of seeing a zero
+# in all data
+#cox.ph: for censored data
+#ocat: if you have ordered categorical data (so level 1 < level 2 < level 3...)
+#the ocat family can work, but read up on what it's doing carefully
+
+
+# Distributional models ####
+
+#mgcv also now includes models that allow for different predictors for the mean
+#and variance, or for different parameters in the same model
+
+# examples include:
+# family = ziplss for zero-inflated data, where the rate of zero-inflation varies across the study area
+# family = twlss - for tweedie data where the scale and shape parameters (rho and p) can also vary with predictors
+# family = mvn - multivariate normal data, for species distributions, other correlated data
+# family = multinom - multinomial data, where categorical variables aren't ordered
+
+# Let's look at a zero-inflated model for richness (even though we know it's
+# definitely not zero-inflated!)
+
+mod_richess_zinf <- gam(list(richness~s(x,y,k=10),
+                             ~ s(year,k=4)),
+                        data = trawls,
+                        family = ziplss,
+                        method = "REML")
+
+summary(mod_richess_zinf)
+draw(mod_richess_zinf)
+
+
+#Now we'll try a more meaningfull model for varying mean and scale for shrimp:
+mod_shrimp_lss <- gam(list(shrimp~s(x,y,k=20),
+                           ~ 1,
+                           ~ s(x,y, k = 10)),
+                        data = trawls,
+                        family = twlss,
+                        method = "REML")
+
+summary(mod_shrimp_lss)
+draw(mod_shrimp_lss)
+
+
+# The last one to look at is categorical regression. This can be a minefield
+# for interpretation, so be careful when working with these models
+
+#multinom needs the categories as integers, with zero being the baseline
+shrimp_categories <- trawls %>%
+  mutate(shrimp_level = case_when(shrimp== 0~0, #no shrimp
+                                  shrimp < 100~1, #shrimp at commerically insignificant levels
+                                  shrimp > 100~2)) #commerical densities of shrimp
+
+# you need one formula for each category level except the first.
+mod_shrimp_multinom <- gam(list(shrimp_level ~ s(x,y, k=20) + s(year,k=5),
+                                ~ s(x,y, k =20) + s(year, k= 5)),
+                           data= shrimp_categories,
+                           method= "REML",
+                           family =multinom(K = 2)) #K is the # of categories - 1
+
+
+summary(mod_shrimp_multinom)
+draw(mod_shrimp_multinom)
