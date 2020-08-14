@@ -46,18 +46,20 @@ m_ti <- gam(shrimp ~ offset(log(area_trawled)) +
 ## 1. Look at the model summary and identify the name of the smooths you want to exclude. Note down exactly the names of the smooths as shown in the output.
 
 ## 2. Generate some new data to predict at. Remember we want the full spatial grid, but we only need a dummy value for `year` and `area_trawled`. To help you, I've provided a template below, which you need to edit to get the data you want:
-new_data <- with(shrimp, expand.grid(x    = ___________,
-                                     y    = ___________,
-                                     year = ___________,
+new_data <- with(shrimp, expand.grid(x    = seq_min_max(x, n = 100),
+                                     y    = seq_min_max(y, n = 100),
+                                     year = 2010, # dummy year
                                      area_trawled = median(area_trawled)))
 
 ## 3. Predict from the model for the values in `new_data`
-spatial_pred <- predict(m_ti, newdata = new_data, exclude = c(__________))
+spatial_pred <- predict(m_ti, newdata = new_data,
+                        exclude = c("ti(x,y,year)", "s(year)"))
 spatial_pred <- bind_cols(as_tibble(new_data), tibble(fit = spatial_pred))
+
 spatial_pred
 
 ## 4. Extract the inverse of the link function from the model `m_ti`
-ilink <- _________(m_ti)
+ilink <- inv_link(m_ti)
 
 ## 5. Set grid cells in the prediction data that are too far from the observation data
 too_far <- exclude.too.far(new_data$x, new_data$y, shrimp$x, shrimp$y, dist = 0.1)
@@ -67,10 +69,10 @@ spatial_pred <- spatial_pred %>% mutate(biomass = ilink(fit),
 spatial_pred
 
 ## 6. Plot the marginal spatial effect
-ggplot(__________,
-       aes(x    = __________,
-           y    = __________,
-           fill = __________)) +
+ggplot(spatial_pred,
+       aes(x    = x,
+           y    = y,
+           fill = biomass)) +
     geom_raster() +
     scale_fill_viridis_c(option = "plasma") +
     coord_equal()

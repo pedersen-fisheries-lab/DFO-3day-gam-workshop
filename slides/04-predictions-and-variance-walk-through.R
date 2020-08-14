@@ -118,9 +118,9 @@ ggplot(sp_pred, aes(x = x, y = y, fill = upr)) + geom_raster() +
     labs(title = "Upper 95% interval")
 
 ## ----vis.gam------------------------------------------------------------------
-vis.gam(m_spt, view = c("x", "y"), type = "response", plot.type = "contour", asp = 1,
-        too.far = 0.1)
-## median year (or year closest to media)
+vis.gam(m_spt, view = c("x", "y"), type = "response", plot.type = "contour",
+        asp = 1, too.far = 0.1)
+## median year (or year closest to median)
 
 ## ----vis.gam 2----------------------------------------------------------------
 vis.gam(m_spt, view = c("x", "y"), cond = list(year = 2007),
