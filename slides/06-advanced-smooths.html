@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="author" content="Eric Pedersen (with material heavily borrowed from David Miller)" />
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="https:\\stackpath.bootstrapcdn.com\bootstrap\4.3.1\css\bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
   </head>
   <body>
@@ -59,6 +59,286 @@ Top picks:
 
   * `betar` for proportions, `ocat` for ordered categorical data
   
+---
+
+class: inverse middle center subsection
+
+# Part 1: Smoothers for complex data
+
+
+---
+
+# Refresher:
+
+A smoother consists of:
+
+1. a set of basis functions, `\(f_1(x_1)\)`, `\(f_2(x_2)\)`, `\(f_3(x_3)\)`, . . .
+
+
+2. linear coefficients for those basis functions `\(\beta_1\)`, `\(\beta_2\)`, `\(\beta_3\)`
+
+
+3. A penalty matrix that describes how strongly different combinations of those basis functions are penalized: `\(\mathbf{\beta}'\mathbf{S}\mathbf{\beta}\)`.
+
+--
+
+Different smoothers penalize different shapes of smooth function; what smooth you use will depend heavily on how wiggly you expect the underlying function to be
+
+---
+
+&lt;img src="figures/basic_smooths.png" width="1733" /&gt;
+
+--
+
+.pull-left[
+
+
+&lt;img src="figures/mrf_smooth.png" width="791" /&gt;
+
+]
+
+--
+
+.pull-right[
+
+
+&lt;img src="figures/cyclic_smooth.png" width="772" /&gt;
+
+]
+
+---
+class: middle
+
+# Markov Random fields (MRFs)
+
+.pull-left[ 
+* MRFs are smoothers for *networks*
+ 
+* penalize groups that are connected toward one another
+]
+
+
+.pull-right[ 
+&lt;img src="figures/mrf-line.png" width="776" /&gt;
+]
+
+---
+class: middle
+
+.pull-left[ 
+ MRFs are especially useful for modelling patchy landscapes and complex coastlines
+ 
+]
+
+.pull-right[
+&lt;img src="figures/mrf-grid.PNG" width="641" /&gt;
+]
+
+
+---
+
+.left-column[ 
+ MRFs are especially useful for modelling patchy landscapes and complex coastlines
+ 
+]
+
+.right-column[
+![](06-advanced-smooths_files/figure-html/trawl-map-1.png)&lt;!-- --&gt;
+
+]
+
+
+---
+
+# It is possible to approximate an MRF with fewer basis functions
+
+![](06-advanced-smooths_files/figure-html/mrf-basis-1.png)&lt;!-- --&gt;
+
+---
+
+# Using GAMs for time series
+
+.pull-left[
+
+The wide range of smoothers available makes GAMs very useful for time series data 
+
+
+
+
+We often want to break a time series apart into components: the trend, seasonal effects, and noise
+]
+
+--
+
+
+.pull-right[
+&lt;img src="figures/time-series-decom.png" width="800" /&gt;
+]
+---
+
+# GAMs let us decompose time series easily
+
+
+
+```r
+nottem_temp &lt;- nottem %&gt;%
+  as_tibble() %&gt;%
+  mutate(year = rep(1920:1939, each = 12),
+         month = rep(1:12, times = 20))%&gt;%
+  rename(temperature = x)
+
+ggplot(nottem_temp, aes(x = year+(month-1)/12, y= temperature))+
+  geom_line()+labs(x="year") +theme_bw()
+```
+
+![](06-advanced-smooths_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+---
+# GAMs let us decompose time series easily
+
+
+
+
+```r
+nottem_temp_model &lt;- gam(temperature ~ s(year,k = 20, bs="tp") +
+                           s(month, bs= "cc", k= 12),
+                         knots = list(month= c(0,12)),
+                         data=nottem_temp)
+draw(nottem_temp_model)
+```
+
+![](06-advanced-smooths_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+# GAMs let us decompose time series easily
+
+
+* Trend model can be any smooth term (thin plate, MRF, random effect, etc.), can include missing years / irregularly sampled data
+
+--
+
+* Possible to include seasonal effects that change over time using tensor-products
+
+
+
+--
+
+* It is also possible to add a model for the error (i.e. short-term variation) using gamm, but it should be used with caution:
+
+
+```r
+nottem_temp_autocor_model &lt;- gamm(temperature ~ s(year,k = 20, bs="tp") +
+                           s(month, bs= "cc", k= 12),
+                         knots = list(month= c(0,12)),
+                         correlation = corAR1(form = ~ month|year),
+                         data=nottem_temp)
+
+summary(nottem_temp_autocor_model$lme)
+```
+---
+
+```
+## Linear mixed-effects model fit by maximum likelihood
+##  Data: strip.offset(mf) 
+##        AIC      BIC    logLik
+##   1105.757 1126.641 -546.8786
+## 
+## Random effects:
+##  Formula: ~Xr - 1 | g
+##  Structure: pdIdnot
+##                  Xr1          Xr2          Xr3          Xr4          Xr5
+## StdDev: 0.0006935094 0.0006935094 0.0006935094 0.0006935094 0.0006935094
+##                  Xr6          Xr7          Xr8          Xr9         Xr10
+## StdDev: 0.0006935094 0.0006935094 0.0006935094 0.0006935094 0.0006935094
+##                 Xr11         Xr12         Xr13         Xr14         Xr15
+## StdDev: 0.0006935094 0.0006935094 0.0006935094 0.0006935094 0.0006935094
+##                 Xr16         Xr17         Xr18
+## StdDev: 0.0006935094 0.0006935094 0.0006935094
+## 
+##  Formula: ~Xr.0 - 1 | g.0 %in% g
+##  Structure: pdIdnot
+##             Xr.01     Xr.02     Xr.03     Xr.04     Xr.05     Xr.06     Xr.07
+## StdDev: 0.8455928 0.8455928 0.8455928 0.8455928 0.8455928 0.8455928 0.8455928
+##             Xr.08     Xr.09    Xr.010 Residual
+## StdDev: 0.8455928 0.8455928 0.8455928 2.285937
+## 
+## Correlation Structure: AR(1)
+##  Formula: ~month | g/g.0/year 
+##  Parameter estimate(s):
+##       Phi 
+## 0.2240677 
+## Fixed effects: y ~ X - 1 
+##                 Value Std.Error  DF   t-value p-value
+## X(Intercept) 49.04233 0.1823854 238 268.89395  0.0000
+## Xs(year)Fx1   0.29639 0.1817856 238   1.63045  0.1043
+##  Correlation: 
+##             X(Int)
+## Xs(year)Fx1 0     
+## 
+## Standardized Within-Group Residuals:
+##        Min         Q1        Med         Q3        Max 
+## -3.5332955 -0.6208724  0.0505809  0.5902081  2.5780469 
+## 
+## Number of Observations: 240
+## Number of Groups: 
+##          g g.0 %in% g 
+##          1          1
+```
+
+
+---
+
+# GAMs also allow for relationships to vary with other predictors
+
+ `\(link(\mu_i) = f_1(x_1)\cdot x_2\)`
+
+--
+
+Specified in `mgcv` using the `by=x2` argument in the `s()/te()/ti()/t2()` functions:
+
+
+```r
+gam(y ~ s(x1, by = x2), ...)
+```
+
+--
+
+
+If `x2` is continuous, this fits a varying slope model
+
+If `x2` is discrete, fits a separate function (with its own penalty) for each group level 
+
+--
+
+**This is really important**: `mgcv` will not warn you if you accidentally use a continuous variable when you mean to use a discrete one (or vice versa)!
+
+---
+
+# Hierarchical GAMs: 
+
+* It is also possible to create group-level smoothers where each group has its own functional shape,  but all curves are similiarly smooth
+
+--
+
+* Benefit: fewer smoothing parameters, share information between group levels on smoothness
+
+--
+
+* The `fs` (factor-smooth) basis is set up in `mgcv` to do this for 1D or 2D smoothers; you can use `te()` or `t2()` functions with group-level random effects for higher dimensional smoothers (see Pedersen et al. 2018 for more details)
+
+
+
+
+---
+
+
+class: inverse middle center subsection
+
+
+# Enough slides; let's code!
+
+
 ---
 
 class: inverse middle center subsection

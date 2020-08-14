@@ -3,6 +3,18 @@
 
 # part 1: Choosing a family to fit your data ####
 
+library('ggplot2')
+library('mgcv')
+library('gratia')
+library('dplyr')
+library('tidyr')
+
+mendota_daphnia <- zooplankton %>%
+  filter(lake=="Mendota",
+         taxon =="D. mendotae")%>%
+  mutate(density = ifelse(density==0, 1000,density))
+
+
 # part 2: Choosing a smooth to model a relationship
 
 

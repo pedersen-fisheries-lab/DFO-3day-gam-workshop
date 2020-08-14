@@ -20,6 +20,7 @@ knitr::opts_chunk$set(echo = FALSE)
 #knitr::opts_knit$set(root.dir = usethis::proj_path())
 
 library('here')
+library('sf')
 library('mgcv')
 library('gratia')
 library('gamair')
@@ -39,6 +40,8 @@ library('transformr')
 library('patchwork')
 library('splines2')
 library('RColorBrewer')
+library('rnaturalearth')
+
 opts_chunk$set(cache=TRUE, echo=FALSE)
 
 trawls <- read.csv("../data/trawl_nl.csv")
@@ -82,6 +85,308 @@ Top picks:
 
   * `betar` for proportions, `ocat` for ordered categorical data
   
+---
+
+class: inverse middle center subsection
+
+# Part 1: Smoothers for complex data
+
+
+---
+
+# Refresher:
+
+A smoother consists of:
+
+1. a set of basis functions, $f_1(x_1)$, $f_2(x_2)$, $f_3(x_3)$, . . .
+
+
+2. linear coefficients for those basis functions $\beta_1$, $\beta_2$, $\beta_3$
+
+
+3. A penalty matrix that describes how strongly different combinations of those basis functions are penalized: $\mathbf{\beta}'\mathbf{S}\mathbf{\beta}$.
+
+--
+
+Different smoothers penalize different shapes of smooth function; what smooth you use will depend heavily on how wiggly you expect the underlying function to be
+
+---
+
+```{r basic_smooth, fig.width=12}
+knitr::include_graphics("figures/basic_smooths.png")
+```
+
+--
+
+.pull-left[
+
+
+```{r mrf_smooth1, fig.width=6}
+knitr::include_graphics("figures/mrf_smooth.png")
+```
+
+]
+
+--
+
+.pull-right[
+
+
+```{r cyclic_smooth, fig.width=6}
+knitr::include_graphics("figures/cyclic_smooth.png")
+```
+
+]
+
+---
+class: middle
+
+# Markov Random fields (MRFs)
+
+.pull-left[ 
+* MRFs are smoothers for *networks*
+ 
+* penalize groups that are connected toward one another
+]
+
+
+.pull-right[ 
+```{r mrf-line}
+knitr::include_graphics("figures/mrf-line.png")
+```
+]
+
+---
+class: middle
+
+.pull-left[ 
+ MRFs are especially useful for modelling patchy landscapes and complex coastlines
+ 
+]
+
+.pull-right[
+```{r mrf-grid}
+knitr::include_graphics("figures/mrf-grid.PNG")
+```
+]
+
+
+---
+
+.left-column[ 
+ MRFs are especially useful for modelling patchy landscapes and complex coastlines
+ 
+]
+
+.right-column[
+```{r trawl-map, echo=FALSE, include= TRUE,message=FALSE, warning=FALSE}
+
+
+trawl_map <- st_read("../data/all_strata.shp",quiet = TRUE)
+
+
+nl_coast <- ne_coastline(scale = 50,returnclass = "sf") %>%
+  st_transform(st_crs(trawl_map))%>%
+  st_intersection(st_as_sfc(st_bbox(trawl_map) ))
+
+ggplot(trawl_map)+
+  geom_sf(fill = NA)+
+  geom_sf(data = nl_coast, color= "red")+
+  theme_bw()
+
+```
+
+]
+
+
+---
+
+# It is possible to approximate an MRF with fewer basis functions
+
+```{r mrf-basis, include=TRUE, echo = FALSE,eval=TRUE, fig.width = 14,fig.height=8,message =FALSE, warning = FALSE}
+
+# load strata shapefile
+
+# load strata shapefile
+strata <- read_sf("../data/trawl_strata.shp",quiet = TRUE)%>%
+  mutate(stratum = factor(stratum))%>%
+  group_by(stratum)%>%
+  summarize()
+
+strata_merge <- strata %>%
+  st_buffer(dist = .01)%>%
+  summarize()
+
+# for mgcv, we want a list of polygons (matrix of vertices)
+nl_strata_penalty <- strata %>%
+  st_buffer(dist = 0.01,quiet =TRUE)%>%
+  st_intersects(strata,sparse= FALSE) 
+nl_strata_penalty <- -nl_strata_penalty
+diag(nl_strata_penalty) <- -(rowSums(nl_strata_penalty)- diag(nl_strata_penalty))
+
+
+strata_mrf <- smooth.construct(s(stratum, bs="mrf", k = 8, xt = list(penalty = nl_strata_penalty)),data=strata,knots = NULL)
+
+basis_map <- strata %>%
+  bind_cols(as_tibble(strata_mrf$X)) %>%
+  gather(key = `basis function`, value = value,V1:V8)%>%
+  ggplot() +
+  geom_sf(data = nl_coast, color= "red")+
+  facet_wrap(~`basis function`,nrow = 2)+
+  geom_sf(aes(fill= value),color =NA)+
+  geom_sf(data=strata_merge,fill =NA)+
+  scale_fill_gradient2(low="blue",high="red")+
+  theme_minimal()
+
+basis_map
+
+```
+
+---
+
+# Using GAMs for time series
+
+.pull-left[
+
+The wide range of smoothers available makes GAMs very useful for time series data 
+
+
+
+
+We often want to break a time series apart into components: the trend, seasonal effects, and noise
+]
+
+--
+
+
+.pull-right[
+```{r }
+
+knitr::include_graphics("figures/time-series-decom.png")
+```
+]
+---
+
+# GAMs let us decompose time series easily
+
+
+```{r include= TRUE, echo = TRUE, eval = TRUE, fig.width=12,fig.height=4.5,warning=FALSE,message= FALSE}
+nottem_temp <- nottem %>%
+  as_tibble() %>%
+  mutate(year = rep(1920:1939, each = 12),
+         month = rep(1:12, times = 20))%>%
+  rename(temperature = x)
+
+ggplot(nottem_temp, aes(x = year+(month-1)/12, y= temperature))+
+  geom_line()+labs(x="year") +theme_bw()
+
+```
+
+---
+# GAMs let us decompose time series easily
+
+
+
+```{r include= TRUE, echo = TRUE, eval = TRUE, fig.width=12,fig.height=6}
+nottem_temp_model <- gam(temperature ~ s(year,k = 20, bs="tp") +
+                           s(month, bs= "cc", k= 12),
+                         knots = list(month= c(0,12)),
+                         data=nottem_temp)
+draw(nottem_temp_model)
+
+```
+
+---
+
+# GAMs let us decompose time series easily
+
+
+* Trend model can be any smooth term (thin plate, MRF, random effect, etc.), can include missing years / irregularly sampled data
+
+--
+
+* Possible to include seasonal effects that change over time using tensor-products
+
+
+
+--
+
+* It is also possible to add a model for the error (i.e. short-term variation) using gamm, but it should be used with caution:
+
+```{r include= TRUE, echo = TRUE, eval = FALSE, fig.width=12,fig.height=6}
+nottem_temp_autocor_model <- gamm(temperature ~ s(year,k = 20, bs="tp") +
+                           s(month, bs= "cc", k= 12),
+                         knots = list(month= c(0,12)),
+                         correlation = corAR1(form = ~ month|year),
+                         data=nottem_temp)
+
+summary(nottem_temp_autocor_model$lme)
+```
+---
+```{r include= TRUE, echo = FALSE, eval = TRUE}
+nottem_temp_autocor_model <- gamm(temperature ~ s(year,k = 20, bs="tp") +
+                           s(month, bs= "cc", k= 12),
+                         knots = list(month= c(0,12)),
+                         correlation = corAR1(form = ~ month|year),
+                         data=nottem_temp)
+
+summary(nottem_temp_autocor_model$lme)
+```
+
+
+---
+
+# GAMs also allow for relationships to vary with other predictors
+
+ $link(\mu_i) = f_1(x_1)\cdot x_2$
+
+--
+
+Specified in `mgcv` using the `by=x2` argument in the `s()/te()/ti()/t2()` functions:
+
+```{r eval=FALSE, echo = TRUE}
+
+gam(y ~ s(x1, by = x2), ...)
+
+```
+
+--
+
+
+If `x2` is continuous, this fits a varying slope model
+
+If `x2` is discrete, fits a separate function (with its own penalty) for each group level 
+
+--
+
+**This is really important**: `mgcv` will not warn you if you accidentally use a continuous variable when you mean to use a discrete one (or vice versa)!
+
+---
+
+# Hierarchical GAMs: 
+
+* It is also possible to create group-level smoothers where each group has its own functional shape,  but all curves are similiarly smooth
+
+--
+
+* Benefit: fewer smoothing parameters, share information between group levels on smoothness
+
+--
+
+* The `fs` (factor-smooth) basis is set up in `mgcv` to do this for 1D or 2D smoothers; you can use `te()` or `t2()` functions with group-level random effects for higher dimensional smoothers (see Pedersen et al. 2018 for more details)
+
+
+
+
+---
+
+
+class: inverse middle center subsection
+
+
+# Enough slides; let's code!
+
+
 ---
 
 class: inverse middle center subsection
@@ -241,7 +546,7 @@ Modelled parameters in the list are:
 ---
 
 
-```{r shrimp_lss2, echo = TRUE, include = TRUE, eval =TRUE,warning=FALSE, fig.width= 15,fig.height=6}
+```{r shrimp_lss2, echo = TRUE, include = TRUE, eval =TRUE,warning=FALSE, fig.width= 15,fig.height=8}
 draw(shrimp_lss_model)
 ```
 
