@@ -1,5 +1,5 @@
 ---
-title: "What are GAMs?"
+title: "Advanced smoothers"
 author: "Eric Pedersen (with material heavily borrowed from David Miller)"
 date: "August 14th, 2020"
 output:
