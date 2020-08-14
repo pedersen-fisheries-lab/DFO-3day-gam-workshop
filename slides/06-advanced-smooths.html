@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>What are GAMs?</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Eric Pedersen (with material heavily borrowed from David Miller)" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https:\\stackpath.bootstrapcdn.com\bootstrap\4.3.1\css\bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: inverse, middle, left, my-title-slide, title-slide
+
+# What are GAMs?
+### Eric Pedersen (with material heavily borrowed from David Miller)
+### 1000–1230 CST (1600–1830 UTC) July 30th, 2020
+
+---
+
+
+
+
+
+# What did you want to cover?
+
+Top picks:
+
+
+* Time series analysis and more complex spatiotemporal models
+
+--
+
+* Regression models where slopes vary with covariates, or between grouping levels
+
+--
+
+* Models with zero-inflation and where variance can change as a function of covariates
+
+--
+
+* Modelling proportion data and categorical data
+
+---
+
+# Outline
+
+1. Different types of smoothers:
+
+  * For spatiotemporal data (Markov Random Fields, Gaussian Processes, Cyclic smoothers)
+
+  * Specifying varying coefficient models and hierarchical GAMs
+
+--
+
+2. New families in `mgcv`
+
+  * Zero-inflated Poisson (`ziplss`) and Location-Scale models (`twlss`)
+
+  * `betar` for proportions, `ocat` for ordered categorical data
+  
+---
+
+class: inverse middle center subsection
+
+# Part 2: Families for modelling different types of data
+
+---
+
+#Key issues for choosing a distribution
+
+The choice of distribution depends heavily on your modelling goals. However, there are general guidelines for choosing an appropriate distribution:
+
+--
+
+*1. The distribution should respect the limits of the data* (continuous vs. discrete, bounded above or below, summing to some constant)
+
+--
+
+*2. Test how well a given distribution fits the data*:  it is always a good idea to hold some data back for testing before fitting any models, and simulating what your data should look like using the chosen distribution.
+
+--
+
+*3. All else equal, a simpler distribution (with fewer free parameters) is likely going to make more robust predictions *
+
+---
+
+
+# Proportion data
+
+* One type of data that can frequently come up in ecological problems are *proportions*, where all that you have for observations are the fraction of some value between zero and one
+ 
+--
+ 
+ 
+* Unlike with *binomial* or categorical data, these measurements are not typically counts, but instead continuous measurements
+
+--
+
+* examples:
+
+  * Percentage cover of plants or benthic invertebrates in a plot
+  * Relative dominance of some key species in a community
+  * Percentage of a stomach filled with food
+
+---
+class: center
+
+# Modelling proportions: the beta distribution
+
+
+
+![](06-advanced-smooths_files/figure-html/beta-dist-1.png)&lt;!-- --&gt;
+
+---
+
+# betar family in mgcv
+
+The beta distribution is implemented in mgcv using the `"betar"` family 
+
+Key features:
+
+* Default link is "logit" (other options available)
+
+* Bounded between zero and one (with corrections to account for data exactly equal to zero and one) 
+
+
+--
+
+
+```r
+shrimp_frac_model &lt;- gam(shrimp/total ~ s(x,y,k=50) + s(year,k=10),
+                         data = trawls,
+                         method = "REML",
+                         family  = betar)
+```
+
+
+---
+
+```r
+draw(shrimp_frac_model)
+```
+
+![](06-advanced-smooths_files/figure-html/shrimp_beta2-1.png)&lt;!-- --&gt;
+
+
+
+---
+
+# Families with multiple smoothed parameters
+
+We have focused so far on models with only a single modelled outcome for each covariate combination: the mean value.
+
+It is also possible to model other components of the distribution, though:
+
+  * Changing variance or scale parameters - **Location-scale-shape families**
+  * The likelihood of a zero value for zero-inflated data: **Zero-inflated families**
+  * The probability of detecting different categories in a location: **categorical models**
+
+---
+
+In general, these models look like:
+
+
+`\(y_i \sim \text{some distribution}(\alpha_i, \beta_i, ...)\)`
+
+`\(link_{\alpha}(\alpha_i) = f_{\alpha,1}(x_1) + f_{\alpha,2}(x_2) ...\)`
+
+`\(link_{\beta}(\beta_i) = f_{\beta,1}(x_1) + f_{\beta,2}(x_2) ...\)`
+
+
+--
+
+**For Zero-inflated data: ** `\(\alpha\)` = probability of observing a zero, `\(\beta\)` mean conditional on not being a zero
+
+**For location-scale models:** `\(\alpha\)` = the mean value, `\(\beta\)` = the shape parameter
+
+**For multinomial models:** `\(\alpha,\beta,etc.\)` = the odds of observing a given category relative to a baseline category
+
+
+---
+
+# These are specified as lists of functions in R:
+
+--
+
+
+```r
+shrimp_lss_model &lt;- gam(list(
+  shrimp ~ s(x,y,k=50) + s(year,k=10),
+  ~ 1,
+  ~ s(x,y,k=10) + s(year, k=10)),
+                         data = trawls,
+                         method = "REML",
+                         family  = twlss)
+```
+
+--
+Remember for Tweedie: `\(\text{Var}\left(\text{value}\right) = \phi\mathbb{E}(\text{value})^q\)`
+
+Modelled parameters in the list are: 
+
+1. The mean value ( `\(\mathbb{E}(\text{value})\)` )
+2. The power `\(p\)`
+3. The scale parameter
+
+---
+
+
+
+```r
+draw(shrimp_lss_model)
+```
+
+![](06-advanced-smooths_files/figure-html/shrimp_lss2-1.png)&lt;!-- --&gt;
+
+---
+
+class: inverse middle center subsection
+
+
+#To the code!
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

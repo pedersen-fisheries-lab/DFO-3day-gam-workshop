@@ -1,0 +1,253 @@
+---
+title: "What are GAMs?"
+author: "Eric Pedersen (with material heavily borrowed from David Miller)"
+date: "1000&ndash;1230 CST (1600&ndash;1830 UTC) July 30th, 2020"
+output:
+  xaringan::moon_reader:
+    css: ['default', 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', 'slides.css']
+    lib_dir: libs
+    nature:
+      titleSlideClass: ['inverse','middle','left',my-title-slide]
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      beforeInit: "macros.js"
+      ratio: '16:9'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+#knitr::opts_knit$set(root.dir = usethis::proj_path())
+
+library('here')
+library('mgcv')
+library('gratia')
+library('gamair')
+library('ggplot2')
+library('purrr')
+library('mvnfast')
+library("tibble")
+library('gganimate')
+library('cowplot')
+library('tidyr')
+library("knitr")
+library("viridis")
+library('readr')
+library('dplyr')
+library('gganimate')
+library('transformr')
+library('patchwork')
+library('splines2')
+library('RColorBrewer')
+opts_chunk$set(cache=TRUE, echo=FALSE)
+
+trawls <- read.csv("../data/trawl_nl.csv")
+```
+
+
+# What did you want to cover?
+
+Top picks:
+
+
+* Time series analysis and more complex spatiotemporal models
+
+--
+
+* Regression models where slopes vary with covariates, or between grouping levels
+
+--
+
+* Models with zero-inflation and where variance can change as a function of covariates
+
+--
+
+* Modelling proportion data and categorical data
+
+---
+
+# Outline
+
+1. Different types of smoothers:
+
+  * For spatiotemporal data (Markov Random Fields, Gaussian Processes, Cyclic smoothers)
+
+  * Specifying varying coefficient models and hierarchical GAMs
+
+--
+
+2. New families in `mgcv`
+
+  * Zero-inflated Poisson (`ziplss`) and Location-Scale models (`twlss`)
+
+  * `betar` for proportions, `ocat` for ordered categorical data
+  
+---
+
+class: inverse middle center subsection
+
+# Part 2: Families for modelling different types of data
+
+---
+
+#Key issues for choosing a distribution
+
+The choice of distribution depends heavily on your modelling goals. However, there are general guidelines for choosing an appropriate distribution:
+
+--
+
+*1. The distribution should respect the limits of the data* (continuous vs. discrete, bounded above or below, summing to some constant)
+
+--
+
+*2. Test how well a given distribution fits the data*:  it is always a good idea to hold some data back for testing before fitting any models, and simulating what your data should look like using the chosen distribution.
+
+--
+
+*3. All else equal, a simpler distribution (with fewer free parameters) is likely going to make more robust predictions *
+
+---
+
+
+# Proportion data
+
+* One type of data that can frequently come up in ecological problems are *proportions*, where all that you have for observations are the fraction of some value between zero and one
+ 
+--
+ 
+ 
+* Unlike with *binomial* or categorical data, these measurements are not typically counts, but instead continuous measurements
+
+--
+
+* examples:
+
+  * Percentage cover of plants or benthic invertebrates in a plot
+  * Relative dominance of some key species in a community
+  * Percentage of a stomach filled with food
+
+---
+class: center
+
+# Modelling proportions: the beta distribution
+
+
+
+```{r beta-dist}
+shape1 <- c(0.2, 1, 5, 1, 3, 1.5)
+shape2 <- c(0.2, 3, 1, 1, 1.5, 3)
+x <- seq(0.01, 0.99, length = 200)
+rr <- brewer.pal(length(shape1), "Dark2")
+fymat <- mapply(dbeta, shape1, shape2, MoreArgs = list(x = x))
+matplot(x, fymat, type = "l", col = rr, lwd = 2, lty = "solid")
+legend("top", bty = "n",
+       legend = expression(alpha == 0.2 ~~ beta == 0.2,
+                           alpha == 1.0 ~~ beta == 3.0,
+                           alpha == 5.0 ~~ beta == 1.0,
+                           alpha == 1.0 ~~ beta == 1.0,
+                           alpha == 3.0 ~~ beta == 1.5,
+                           alpha == 1.5 ~~ beta == 3.0),
+       col = rr, cex = 1.25, lty = "solid", lwd = 2)
+```
+
+---
+
+# betar family in mgcv
+
+The beta distribution is implemented in mgcv using the `"betar"` family 
+
+Key features:
+
+* Default link is "logit" (other options available)
+
+* Bounded between zero and one (with corrections to account for data exactly equal to zero and one) 
+
+
+--
+
+```{r shrimp_beta, echo = TRUE, include = TRUE, eval =TRUE}
+shrimp_frac_model <- gam(shrimp/total ~ s(x,y,k=50) + s(year,k=10),
+                         data = trawls,
+                         method = "REML",
+                         family  = betar)
+```
+
+
+---
+```{r shrimp_beta2, echo = TRUE, include = TRUE, eval =TRUE, fig.width=12,warning=FALSE}
+draw(shrimp_frac_model)
+```
+
+
+
+---
+
+# Families with multiple smoothed parameters
+
+We have focused so far on models with only a single modelled outcome for each covariate combination: the mean value.
+
+It is also possible to model other components of the distribution, though:
+
+  * Changing variance or scale parameters - **Location-scale-shape families**
+  * The likelihood of a zero value for zero-inflated data: **Zero-inflated families**
+  * The probability of detecting different categories in a location: **categorical models**
+
+---
+
+In general, these models look like:
+
+
+$y_i \sim \text{some distribution}(\alpha_i, \beta_i, ...)$
+
+$link_{\alpha}(\alpha_i) = f_{\alpha,1}(x_1) + f_{\alpha,2}(x_2) ...$
+
+$link_{\beta}(\beta_i) = f_{\beta,1}(x_1) + f_{\beta,2}(x_2) ...$
+
+
+--
+
+**For Zero-inflated data: ** $\alpha$ = probability of observing a zero, $\beta$ mean conditional on not being a zero
+
+**For location-scale models:** $\alpha$ = the mean value, $\beta$ = the shape parameter
+
+**For multinomial models:** $\alpha,\beta,etc.$ = the odds of observing a given category relative to a baseline category
+
+
+---
+
+# These are specified as lists of functions in R:
+
+--
+
+```{r shrimp_lss, echo = TRUE, include = TRUE, eval =TRUE}
+shrimp_lss_model <- gam(list(
+  shrimp ~ s(x,y,k=50) + s(year,k=10),
+  ~ 1,
+  ~ s(x,y,k=10) + s(year, k=10)),
+                         data = trawls,
+                         method = "REML",
+                         family  = twlss)
+```
+
+--
+Remember for Tweedie: $\text{Var}\left(\text{value}\right) = \phi\mathbb{E}(\text{value})^q$
+
+Modelled parameters in the list are: 
+
+1. The mean value ( $\mathbb{E}(\text{value})$ )
+2. The power $p$
+3. The scale parameter
+
+---
+
+
+```{r shrimp_lss2, echo = TRUE, include = TRUE, eval =TRUE,warning=FALSE, fig.width= 15,fig.height=6}
+draw(shrimp_lss_model)
+```
+
+---
+
+class: inverse middle center subsection
+
+
+#To the code!
