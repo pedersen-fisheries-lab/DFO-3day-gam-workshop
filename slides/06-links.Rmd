@@ -327,3 +327,145 @@ appraise(m1, point_col = "steelblue", point_alpha = 0.4, method = "simulate")
 class: inverse middle center big-subsection
 
 # Q&A
+
+---
+
+# Intervals redux &mdash; I
+
+```{r fit-richness, echo = FALSE, results = 'hide'}
+library('here')
+shrimp <- read.csv(here('data', 'trawl_nl.csv'))
+m_rich <- gam(richness ~ s(year),
+              family = poisson,
+              method = "REML",
+              data = shrimp)
+```
+
+Across the function intervals have ~ nominal coverage when averaged over the whole function
+
+**Simultaneous** intervals have *whole function* coverage &mdash; 95% of all curves from posterior are contained in the interval in their entirety
+
+```{r intervals-redux, fig.show = "hide"}
+ci <- confint(m_rich, "s(year)")
+si <- confint(m_rich, "s(year)", type = "simultaneous")
+sms <- smooth_samples(m_rich, "s(year)", n = 25, seed = 42) 
+ggplot(ci) +
+    geom_ribbon(data = si, aes(x = year, ymax = upper, ymin = lower),
+                fill = "red", alpha = 0.3) +
+    geom_ribbon(aes(x = year, ymax = upper, ymin = lower), alpha = 0.3) +
+    geom_line(aes(x = year, y = est), lwd = 1) +
+    geom_line(data = sms, aes(x = .x1, y = value, group = draw), alpha = 0.3) +
+    labs(y = "Effect", x = NULL,
+         title = "Comparing credible & simultaneous intervals")
+```
+
+---
+
+# Intervals redux &mdash; II
+
+```{r intervals-redux, echo = FALSE}
+```
+
+---
+
+# Intervals redux &mdash; III
+
+Those intervals and the intervals we generated using `predict()` are for the fitted values of the model (or smooth)
+
+These are for the expected value of the response &mdash; the mean response
+
+But there is a distribution about this mean from which we might observe data
+
+Prediction intervals include this *sampling* variation from the conditional distribution of the response
+
+Can produce those by sampling new response data from the model
+
+`gratia::simulate.gam()` and `gratia::predicted_samples()`
+
+---
+
+# Intervals redux &mdash; IV
+
+```{r prediction-intervals}
+new_year <- with(shrimp, tibble(year = seq_min_max(year, n = 10000)))
+ps <- predicted_samples(m_rich, newdata = new_year, n = 100, seed = 21)
+p_int <- ps %>%
+    group_by(row) %>%
+    summarise(upr = quantile(response, prob = 0.975),
+              lwr = quantile(response, prob = 0.025),
+              .groups = "drop_last") %>%
+    bind_cols(new_year)
+```
+
+---
+
+```{r prediction-intervals-plot, echo = FALSE}
+ilink <- inv_link(m_rich)
+pred <- as.data.frame(predict(m_rich, newdata = new_year, se.fit = TRUE)) %>% as_tibble() %>%
+    bind_cols(new_year) %>% mutate(fitted = ilink(fit),
+                                   upr = ilink(fit + (2 * se.fit)),
+                                   lwr = ilink(fit - (2 * se.fit)))
+ggplot(shrimp, aes(x = year)) +
+    geom_point(aes(y = richness), alpha = 0.5,
+               position = position_jitter(width = 0.1)) +
+    geom_ribbon(data = p_int, aes(ymax = upr, ymin = lwr),
+                fill = "red", alpha = 0.3) +
+    geom_ribbon(data = pred, aes(ymax = upr, ymin = lwr), alpha = 0.3) +
+    geom_line(data = pred, aes(y = fitted), lwd = 1) +
+    labs(y = "Effect", x = NULL,
+         title = "Credible & prediction intervals",
+         subtitle = "Suggests model is wrong; doesn't reproduce the data")
+```
+
+---
+
+# Rootograms &mdash; I
+
+A useful diagnostic for count data is a *rootogram*
+
+Compares the **expected** frequencies of counts (0, 1, 2, &hellip;, m) from the model with the **observed** frequencies
+
+Currently only available in **countreg** for GAMs &mdash; coming soon to *gratia*
+
+**countreg** not on CRAN yet either
+
+```{r install-countreg, message = FALSE}
+if (!requireNamespace("countreg")) {
+    install.packages("countreg", repos="http://R-Forge.R-project.org")
+}
+library("countreg")
+```
+
+---
+
+# Rootograms &mdash; II
+
+.row[
+.col-6[
+
+Hanging rootogram
+
+Line = *expected* frequencies
+
+Bars = *observed* frequencies
+
+Typically plot $\sqrt{\text{freq}}$
+
+Everything OK if all bars hit 0 line
+
+Dashed lines are Tukey's "warning limits" drawn at &plusmn; 1
+]
+
+.col-6[
+```{r rootogram-richness, fig.height = 5, fig.width = 5 * 1.777777}
+root_pois <- rootogram(m_rich, plot = FALSE,
+                       style = "hanging")
+autoplot.rootogram(root_pois) +
+    geom_hline(yintercept = c(-1,1),
+               lty = "dashed")
+```
+]
+
+]
+
+<https://fromthebottomoftheheap.net/2016/06/07/rootograms/>

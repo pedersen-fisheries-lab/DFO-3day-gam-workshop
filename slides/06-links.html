@@ -5,7 +5,6 @@
     <meta charset="utf-8" />
     <meta name="author" content="David L Miller" />
     <meta name="date" content="2020-08-14" />
-    <script src="libs/header-attrs/header-attrs.js"></script>
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="slides.css" type="text/css" />
@@ -298,6 +297,130 @@ brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
 class: inverse middle center big-subsection
 
 # Q&amp;A
+
+---
+
+# Intervals redux &amp;mdash; I
+
+
+
+Across the function intervals have ~ nominal coverage when averaged over the whole function
+
+**Simultaneous** intervals have *whole function* coverage &amp;mdash; 95% of all curves from posterior are contained in the interval in their entirety
+
+
+```r
+ci &lt;- confint(m_rich, "s(year)")
+si &lt;- confint(m_rich, "s(year)", type = "simultaneous")
+sms &lt;- smooth_samples(m_rich, "s(year)", n = 25, seed = 42) 
+ggplot(ci) +
+    geom_ribbon(data = si, aes(x = year, ymax = upper, ymin = lower),
+                fill = "red", alpha = 0.3) +
+    geom_ribbon(aes(x = year, ymax = upper, ymin = lower), alpha = 0.3) +
+    geom_line(aes(x = year, y = est), lwd = 1) +
+    geom_line(data = sms, aes(x = .x1, y = value, group = draw), alpha = 0.3) +
+    labs(y = "Effect", x = NULL,
+         title = "Comparing credible &amp; simultaneous intervals")
+```
+
+---
+
+# Intervals redux &amp;mdash; II
+
+![](06-links_files/figure-html/intervals-redux-1.svg)&lt;!-- --&gt;
+
+---
+
+# Intervals redux &amp;mdash; III
+
+Those intervals and the intervals we generated using `predict()` are for the fitted values of the model (or smooth)
+
+These are for the expected value of the response &amp;mdash; the mean response
+
+But there is a distribution about this mean from which we might observe data
+
+Prediction intervals include this *sampling* variation from the conditional distribution of the response
+
+Can produce those by sampling new response data from the model
+
+`gratia::simulate.gam()` and `gratia::predicted_samples()`
+
+---
+
+# Intervals redux &amp;mdash; IV
+
+
+```r
+new_year &lt;- with(shrimp, tibble(year = seq_min_max(year, n = 10000)))
+ps &lt;- predicted_samples(m_rich, newdata = new_year, n = 100, seed = 21)
+p_int &lt;- ps %&gt;%
+    group_by(row) %&gt;%
+    summarise(upr = quantile(response, prob = 0.975),
+              lwr = quantile(response, prob = 0.025),
+              .groups = "drop_last") %&gt;%
+    bind_cols(new_year)
+```
+
+---
+
+![](06-links_files/figure-html/prediction-intervals-plot-1.svg)&lt;!-- --&gt;
+
+---
+
+# Rootograms &amp;mdash; I
+
+A useful diagnostic for count data is a *rootogram*
+
+Compares the transformed expected frequencies of counts (0, 1, 2, &amp;hellip;, m) from the model with the frequencies
+
+Currently only available in **countreg** for GAMs &amp;mdash; coming soon to *gratia*
+
+**countreg** not on CRAN yet either
+
+
+```r
+if (!requireNamespace("countreg")) {
+    install.packages("countreg", repos="http://R-Forge.R-project.org")
+}
+library("countreg")
+```
+
+&lt;https://fromthebottomoftheheap.net/2016/06/07/rootograms/&gt;
+
+---
+
+# Rootograms &amp;mdash; II
+
+.row[
+.col-6[
+
+Hanging rootogram
+
+Line = *expected* frequencies
+
+Bars = *observed* frequencies
+
+Typically plot `\(\sqrt{\text{freq}}\)`
+
+Everything OK if all bars hit 0 line
+
+Dashed lines are Tukey's "warning limits" drawn at &amp;plusmn; 1
+]
+
+.col-6[
+
+```r
+root_pois &lt;- rootogram(m_rich, plot = FALSE,
+                       style = "hanging")
+autoplot.rootogram(root_pois) +
+    geom_hline(yintercept = c(-1,1),
+               lty = "dashed")
+```
+
+![](06-links_files/figure-html/rootogram-richness-1.svg)&lt;!-- --&gt;
+]
+
+]
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
