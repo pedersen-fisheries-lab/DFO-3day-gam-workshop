@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Links to other methods</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="David L Miller, Gavin Simpson" />
+    <meta name="date" content="2020-08-14" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: inverse, middle, left, my-title-slide, title-slide
+
+# Links to other methods
+### David L Miller, Gavin Simpson
+### August 14, 2020
+
+---
+
+
+
+
+# So far:
+
+- Looked at models within `mgcv`
+  - `gam()`, `bam()`, `gamm()`
+
+But there are other places to go.
+
+
+---
+class: inverse middle center big-subsection
+
+## GAMs in context
+
+---
+
+# Lots of ways to fit flexible models!
+
+- 💬 "Why not use..."
+  - INLA
+  - kriging
+  - MaxEnt
+  - mixed effects models
+  - 💬 "... my favourite method"
+
+&lt;br/&gt;
+
+(**TL;DR: they are all GAMs**)
+
+---
+
+# Lots of things are just GLMs
+
+- GAMs are "GLMs with wiggles"
+- GLMMs are "GLMs with random effects"
+- What is the general theme here?
+
+- Interested in a *design matrix*, `\(\mathbf{X}\)`
+- Impose some **structure** on the model
+
+---
+
+# Basis-penalty smoothers
+
+For smoothers, we can always specify things as:
+
+1. basis functions, `\(b_k(x)\)`, which we put in the design matrix
+2. penalties, some function of `\(b_k(x)\)`s (usually integrals)
+
+We call these *basis-penalty smoothers* in general.
+
+In `mgcv` the `smooth.construct.*.smooth.spec` methods build design matrices and penalties.
+
+---
+
+# Bayesian links
+
+We generally can write our penalized log-likelihood as:
+
+$$
+l(\boldsymbol{\beta}) - \frac{1}{2} \sum_{m=1}^M \lambda_m \boldsymbol{\beta}^{\intercal} \boldsymbol{S}_m \boldsymbol{\beta}
+$$
+
+Exponentiating (&amp; merging all the penalty stuff):
+
+$$
+\mathcal{L}_p (\boldsymbol{\beta}, \boldsymbol{\lambda} ) = \mathcal{L}( \boldsymbol{\beta} ) \exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )
+$$
+
+That `\(\exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )\)` term looks **a lot** like a normal distribution...
+
+**A *prior*?** (https://arxiv.org/abs/1902.01330)
+
+---
+
+# Penalties, covariances, precisions
+
+If `\(\exp ( - \boldsymbol{\beta}^\intercal \mathbf{S}  \boldsymbol{\beta} )\)` is a normal prior on the coefficients...
+
+- `\(\mathbf{S}\)` is the penalty
+- `\(\Rightarrow\)` `\(\mathbf{S}\)` is the precision
+- `\(\Rightarrow\)` `\(\mathbf{S}^{-1}\)` is the covariance matrix!
+
+Thinking about things in terms of these priors means we can write lots of models as GAMs!
+
+---
+
+# Random effects
+
+- Fancy multi-level random effects models are just complicated `\(\mathbf{S}^{-1}\)`
+- Markov random fields (next?) same idea!
+
+
+---
+
+# Links to INLA, kriging
+
+- INLA fits "latent Gaussian additive models" `\(\Rightarrow\)` GAMs!
+  - INLA in `mgcv`: https://doi.org/10.1093/biomet/asz044
+- INLA's SPDE method is a basis-penalty smoother
+  - https://arxiv.org/abs/2001.07623
+- Various kriging covariance functions can be written as basis-penalty smoothers
+  - related to thin plate splines!
+  
+---
+
+# MaxEnt
+
+- Try to avoid presence only if you can!
+- MaxEnt is just a Poisson process model
+  - https://onlinelibrary.wiley.com/doi/10.1111/j.1541-0420.2012.01824.x
+  - https://projecteuclid.org/euclid.aoas/1287409378
+- We can write these as GLMs/GAMs!
+- (and we know how GLMs/GAMs work!)
+
+
+---
+
+class: inverse middle center big-subsection
+
+## Links to other software
+
+---
+
+# Basis-penalty/covariance opens things up
+
+Lots of software just want design and covariance matrices:
+
+- JAGS
+- *brms*
+- TMB
+- Stan
+- Nimble
+
+---
+
+# The `jagam` idea
+
+- Write smooths as design matrices/precisions
+- Normal prior on model coefficients
+- Vague gamma prior on smoothing parameters
+- Fit in JAGS
+- `mgcv::jagam()` even generates the code for you!
+- https://www.jstatsoft.org/article/view/v075i07
+
+---
+
+# JAGS sucks
+
+- For complex models, JAGS can be very slow
+- Nimble can really help, and works with JAGS code!
+- Personal experience: 2 hour fit `\(\rightarrow\)` 8 mins
+- https://r-nimble.org/quick-guide-for-converting-from-jags-or-bugs-to-nimble
+
+
+---
+
+# We can do the same thing in TMB!
+
+- Template Model Builder is extremely fast
+- We can do a similar trick
+- the `GMRF` function and sparse matrices help
+- Worth it for **very** big models
+
+---
+
+# *brms*
+
+*brms* is an R package for fitting Bayesian generalized (non-)linear multivariate multilevel models using 'Stan' for full Bayesian inference
+
+It is largely the work of Paul-Christian Bürkner
+
+*brms* can fit penalized smooth terms using `s()` and `t2()` all the basis types available in *mgcv*
+
+Uses the same mixed model representation of smooths as is used in *gamm4*, which is why you can't use `te()` and `ti()`
+
+Different `family` options are available (no Tweedie for example) but option to create custom family functions
+
+---
+
+# *brms* version of species richness model
+
+
+```r
+brm(bf(richness ~ s(year)),
+    data = shrimp, family = poisson(),
+    iter = 4000, warmup = 1000, chains = 4)
+```
+
+* smooths are random effects so uses default priors for random effect standard deviations
+    * half Student *t* priors with 3 degrees of freedom and an appropriate scale parameter
+* 4 chains
+    * 4000 total samples per chain
+	* first 1000 samples used as burn in &amp; to tune the sampler
+
+---
+
+# *brms* version of the space-time model
+
+There isn't a good family for this in *brms*; one option might be a hurdle gamma if we observed 0 shrimp biomass in some trawls
+
+
+```r
+brm(bf(shrimp ~ t2(x, y, year, d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
+       hu ~ t2(x, y, year), d = c(2,1), bs = c('tp','cr'), k = c(20, 5)),
+    data = shrimp, family = hurdle_gamma(),
+    iter = 4000, warmup = 1000, chains = 4)
+```
+
+---
+
+# Utility packages
+
+- better graphics for GAMs: `gratia`, `mgcViz`
+- extrapolation tool for SDMs: `dsmextra`
+- very new: `mgcvUtils`
+
+---
+
+# *gratia*
+
+*gratia's* main reason for existing is that I (Gavin) wanted to make it easier to work with *mgcv* models using *ggplot2* and the other *tidyverse* packages
+
+*gratia* provides
+
+* *ggplot2* implementation of `plot.gam()`: `draw.gam()`
+* *ggplot2* implementation of `gam.check()`'s plots: `appraise()`
+* derivatives of smooths (for estimating rates of change)
+* simultaneous intervals for smooths (whole-function coverage)
+* utilities for working with *mgcv* fits extracting info from them into tidy objects
+
+&lt;https://gavinsimpson.github.io/gratia/&gt;
+
+---
+
+# *gratia* &amp;mdash; `draw()`
+
+![](05-links_files/figure-html/gratia-draw-1.svg)&lt;!-- --&gt;
+
+---
+
+# *gratia* &amp;mdash; `appraise()`
+
+![](05-links_files/figure-html/gratia-appraise-1.svg)&lt;!-- --&gt;
+
+---
+
+# Extrapolation
+
+- Statisticians: don't do it!
+- Managers: give me results!
+- Variance issues?
+- Space-time interchangability/transferability?
+- `dsmextra` package by Phil Bouchet
+  - [https://densitymodelling.github.io/dsmextra/index.html](https://densitymodelling.github.io/dsmextra/index.html)
+  - paper accepted at Methods in Ecology and Evolution
+
+![dsm extra logo](figures/dsmextra-hex.png)
+
+---
+
+# `mgcvUtils`
+
+- Written by us! (&amp; Matteo Fasiolo)
+- Still being developed
+- Extra utilities
+  - interface for `DHARMa`
+  - Markov random field helpers
+  - SPDE smoother
+  - More soon!
+- https://github.com/dill/mgcvUtils
+
+---
+
+class: inverse middle center big-subsection
+
+# Q&amp;A
+
+---
+
+# Intervals redux &amp;mdash; I
+
+
+
+Across the function intervals have ~ nominal coverage when averaged over the whole function
+
+**Simultaneous** intervals have *whole function* coverage &amp;mdash; 95% of all curves from posterior are contained in the interval in their entirety
+
+
+```r
+ci &lt;- confint(m_rich, "s(year)")
+si &lt;- confint(m_rich, "s(year)", type = "simultaneous")
+sms &lt;- smooth_samples(m_rich, "s(year)", n = 25, seed = 42) 
+ggplot(ci) +
+    geom_ribbon(data = si, aes(x = year, ymax = upper, ymin = lower),
+                fill = "red", alpha = 0.3) +
+    geom_ribbon(aes(x = year, ymax = upper, ymin = lower), alpha = 0.3) +
+    geom_line(aes(x = year, y = est), lwd = 1) +
+    geom_line(data = sms, aes(x = .x1, y = value, group = draw), alpha = 0.3) +
+    labs(y = "Effect", x = NULL,
+         title = "Comparing credible &amp; simultaneous intervals")
+```
+
+---
+
+# Intervals redux &amp;mdash; II
+
+![](05-links_files/figure-html/intervals-redux-1.svg)&lt;!-- --&gt;
+
+---
+
+# Intervals redux &amp;mdash; III
+
+Those intervals and the intervals we generated using `predict()` are for the fitted values of the model (or smooth)
+
+These are for the expected value of the response &amp;mdash; the mean response
+
+But there is a distribution about this mean from which we might observe data
+
+Prediction intervals include this *sampling* variation from the conditional distribution of the response
+
+Can produce those by sampling new response data from the model
+
+`gratia::simulate.gam()` and `gratia::predicted_samples()`
+
+---
+
+# Intervals redux &amp;mdash; IV
+
+
+```r
+new_year &lt;- with(shrimp, tibble(year = seq_min_max(year, n = 100)))
+ps &lt;- predicted_samples(m_rich, newdata = new_year, n = 10000, seed = 21)
+p_int &lt;- ps %&gt;%
+    group_by(row) %&gt;%
+    summarise(upr = quantile(response, prob = 0.975),
+              lwr = quantile(response, prob = 0.025),
+              .groups = "drop_last") %&gt;%
+    bind_cols(new_year)
+```
+
+---
+
+![](05-links_files/figure-html/prediction-intervals-plot-1.svg)&lt;!-- --&gt;
+
+---
+
+# Rootograms &amp;mdash; I
+
+A useful diagnostic for count data is a *rootogram*
+
+Compares the **expected** frequencies of counts (0, 1, 2, &amp;hellip;, m) from the model with the **observed** frequencies
+
+Currently only available in **countreg** for GAMs &amp;mdash; coming soon to *gratia*
+
+**countreg** not on CRAN yet either
+
+
+```r
+if (!requireNamespace("countreg")) {
+    install.packages("countreg", repos="http://R-Forge.R-project.org")
+}
+library("countreg")
+```
+
+---
+
+# Rootograms &amp;mdash; II
+
+.row[
+.col-6[
+
+Hanging rootogram
+
+Line = *expected* frequencies
+
+Bars = *observed* frequencies
+
+Typically plot `\(\sqrt{\text{freq}}\)`
+
+Everything OK if all bars hit 0 line
+
+Dashed lines are Tukey's "warning limits" drawn at &amp;plusmn; 1
+]
+
+.col-6[
+
+```r
+root_pois &lt;- rootogram(m_rich, plot = FALSE,
+                       style = "hanging")
+autoplot.rootogram(root_pois) +
+    geom_hline(yintercept = c(-1,1),
+               lty = "dashed")
+```
+
+![](05-links_files/figure-html/rootogram-richness-1.svg)&lt;!-- --&gt;
+]
+
+]
+
+&lt;https://fromthebottomoftheheap.net/2016/06/07/rootograms/&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
