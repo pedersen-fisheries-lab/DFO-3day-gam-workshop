@@ -1,6 +1,6 @@
 ---
 title: "Links to other methods"
-author: "David L Miller"
+author: "David L Miller, Gavin Simpson"
 date: "August 14, 2020"
 output:
   xaringan::moon_reader:
@@ -134,7 +134,7 @@ Thinking about things in terms of these priors means we can write lots of models
 # Random effects
 
 - Fancy multi-level random effects models are just complicated $\mathbf{S}^{-1}$
-- We've seen Markov random fields, same idea!
+- Markov random fields (next?) same idea!
 
 
 ---
@@ -142,6 +142,7 @@ Thinking about things in terms of these priors means we can write lots of models
 # Links to INLA, kriging
 
 - INLA fits "latent Gaussian additive models" $\Rightarrow$ GAMs!
+  - INLA in `mgcv`: https://doi.org/10.1093/biomet/asz044
 - INLA's SPDE method is a basis-penalty smoother
   - https://arxiv.org/abs/2001.07623
 - Various kriging covariance functions can be written as basis-penalty smoothers
@@ -231,7 +232,7 @@ brm(bf(richness ~ s(year)),
     iter = 4000, warmup = 1000, chains = 4)
 ```
 
-* smooths are random effectsso uses default priors for random effect standard deviations
+* smooths are random effects so uses default priors for random effect standard deviations
     * half Student *t* priors with 3 degrees of freedom and an appropriate scale parameter
 * 4 chains
     * 4000 total samples per chain
@@ -387,8 +388,8 @@ Can produce those by sampling new response data from the model
 # Intervals redux &mdash; IV
 
 ```{r prediction-intervals}
-new_year <- with(shrimp, tibble(year = seq_min_max(year, n = 10000)))
-ps <- predicted_samples(m_rich, newdata = new_year, n = 100, seed = 21)
+new_year <- with(shrimp, tibble(year = seq_min_max(year, n = 100)))
+ps <- predicted_samples(m_rich, newdata = new_year, n = 10000, seed = 21)
 p_int <- ps %>%
     group_by(row) %>%
     summarise(upr = quantile(response, prob = 0.975),
