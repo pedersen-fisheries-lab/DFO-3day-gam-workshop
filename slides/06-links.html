@@ -371,7 +371,7 @@ p_int &lt;- ps %&gt;%
 
 A useful diagnostic for count data is a *rootogram*
 
-Compares the transformed expected frequencies of counts (0, 1, 2, &amp;hellip;, m) from the model with the frequencies
+Compares the **expected** frequencies of counts (0, 1, 2, &amp;hellip;, m) from the model with the **observed** frequencies
 
 Currently only available in **countreg** for GAMs &amp;mdash; coming soon to *gratia*
 
@@ -384,8 +384,6 @@ if (!requireNamespace("countreg")) {
 }
 library("countreg")
 ```
-
-&lt;https://fromthebottomoftheheap.net/2016/06/07/rootograms/&gt;
 
 ---
 
@@ -421,6 +419,8 @@ autoplot.rootogram(root_pois) +
 ]
 
 ]
+
+&lt;https://fromthebottomoftheheap.net/2016/06/07/rootograms/&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
